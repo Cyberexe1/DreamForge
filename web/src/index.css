@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-ink-950 text-slate-300 font-sans antialiased;
+  }
+
+  ::selection {
+    @apply bg-pulse-500/30 text-white;
+  }
+
+  /* Visible, consistent focus ring for keyboard users. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-pulse-400/70 ring-offset-2 ring-offset-ink-950;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Frosted panel used by the header and every card. */
+  .glass {
+    @apply border border-white/10 bg-white/[0.03] backdrop-blur-xl;
+  }
+
+  .card {
+    @apply glass rounded-3xl;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10
+           bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           text-sm font-medium transition-all duration-200
+           disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-white px-5 py-2.5 text-ink-950 hover:bg-slate-200
+           hover:shadow-[0_0_28px_-6px_rgba(255,255,255,0.35)] active:scale-[0.97];
+  }
+
+  .btn-ghost {
+    @apply btn border border-white/10 bg-white/[0.03] px-5 py-2.5 text-slate-200
+           hover:border-white/20 hover:bg-white/[0.07] active:scale-[0.97];
+  }
+
+  .nav-link {
+    @apply rounded-full px-3.5 py-2 text-sm text-slate-400 transition-colors
+           hover:bg-white/5 hover:text-white;
+  }
+
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
+  }
+
+  /* Ambient background wash behind the hero. */
+  .aurora {
+    background:
+      radial-gradient(60% 50% at 18% 12%, rgba(99, 102, 241, 0.16), transparent 70%),
+      radial-gradient(45% 45% at 82% 8%, rgba(251, 191, 36, 0.09), transparent 70%),
+      radial-gradient(55% 45% at 50% 100%, rgba(56, 189, 248, 0.08), transparent 70%);
+  }
+
+  .story-prose {
+    @apply whitespace-pre-line font-display text-[1.0625rem] font-light
+           leading-[1.85] text-slate-300/95 sm:text-lg;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
