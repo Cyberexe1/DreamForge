@@ -1,0 +1,53 @@
+{
+  "_comment": [
+    "Creative agent execution role. Attach to dreamforge-agent-execution,",
+    "trusted by lambda.amazonaws.com (trust-lambda.json), alongside the managed",
+    "policy AWSLambdaBasicExecutionRole for CloudWatch Logs.",
+    "",
+    "Deliberately absent: s3:DeleteObject and s3:GetObject. The agent only ever",
+    "writes new objects, so no bug or bad loop can destroy or read back the",
+    "archive — and that archive is the submission's evidence. Also absent: any",
+    "access to the users table, which belongs to the backend.",
+    "",
+    "The text model is reached through a us. inference profile, which needs BOTH",
+    "the inference-profile ARN and the underlying foundation-model ARN — a call",
+    "through a profile is authorised against both. Missing the second one fails",
+    "with AccessDenied naming a model id you never asked for.",
+    "",
+    "nova-canvas is listed but currently returns ResourceNotFoundException: it is",
+    "marked LEGACY and this account was not using it before the cutoff. Left in",
+    "so the agent starts illustrating the day access appears."
+  ],
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InvokeNamedModelsOnly",
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel"],
+      "Resource": [
+        "arn:aws:bedrock:us-east-1:<ACCOUNT_ID>:inference-profile/us.amazon.nova-lite-v1:0",
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-lite-v1:0",
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-pro-v1:0",
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-canvas-v1:0"
+      ]
+    },
+    {
+      "Sid": "WriteCapsulesAndImages",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject"],
+      "Resource": "arn:aws:s3:::dreamforge-artifacts-<ACCOUNT_ID>/*"
+    },
+    {
+      "Sid": "AgentMemory",
+      "Effect": "Allow",
+      "Action": ["dynamodb:PutItem", "dynamodb:Query"],
+      "Resource": "arn:aws:dynamodb:us-east-1:<ACCOUNT_ID>:table/dreamforge-history"
+    },
+    {
+      "Sid": "PublishFreshCapsuleImmediately",
+      "Effect": "Allow",
+      "Action": ["cloudfront:CreateInvalidation"],
+      "Resource": "arn:aws:cloudfront::<ACCOUNT_ID>:distribution/<DISTRIBUTION_ID>"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-# 🌧️ Creative Pulse
+# 🌧️ DreamForge
 
 **An autonomous AI agent that creates a new piece of art + writing every single day — with zero human input.**
 
@@ -8,7 +8,7 @@
 
 ## What it is
 
-Creative Pulse wakes up on its own every morning, looks at the real world (date, day, season, weather, location), decides what it feels like creating, and publishes a **Daily Creative Capsule**:
+DreamForge wakes up on its own every morning, looks at the real world (date, day, season, weather, location), decides what it feels like creating, and publishes a **Daily Creative Capsule**:
 
 | Output | Description |
 |---|---|
@@ -61,7 +61,7 @@ The agent is not a single prompt call. It **senses, remembers, decides, self-cri
 |---|---|
 | **Amazon EventBridge Scheduler** | Fires the agent daily — this is the autonomy |
 | **AWS Lambda** | Runs the agent loop (Python 3.12) |
-| **Amazon Bedrock** | Claude for text, Nova Canvas for image |
+| **Amazon Bedrock** | Nova Pro for text, Nova Canvas for image |
 | **Amazon S3** | Stores images + capsule JSON, hosts the frontend |
 | **Amazon DynamoDB** | Agent long-term memory + generation history |
 | **Amazon CloudFront** | Public delivery of site and artifacts |
@@ -121,7 +121,7 @@ cd infra
 sam build && sam deploy --guided
 
 # 2. force one run now (proves it works before the schedule fires)
-aws lambda invoke --function-name creative-pulse-agent out.json
+aws lambda invoke --function-name dreamforge-agent out.json
 
 # 3. run the site
 cd ../web

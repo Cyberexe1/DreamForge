@@ -45,8 +45,25 @@ Autonomous_Agent/
 │  │     ├─ States.tsx       # loading skeleton + waiting state
 │  │     └─ Footer.tsx
 │  └─ .env.example
+├─ backend/                  # Node API: accounts + per-user data
+│  ├─ src/
+│  │  ├─ app.js              # express wiring: helmet, CORS, routes
+│  │  ├─ server.js           # local listener
+│  │  ├─ lambda.js           # Lambda handler (Function URL)
+│  │  ├─ config.js           # env read + validated at boot
+│  │  ├─ db.js               # DynamoDB document client
+│  │  ├─ lib/
+│  │  │  ├─ password.js      # bcrypt + SHA-256 pre-hash — only plaintext handler
+│  │  │  ├─ token.js         # JWT sign/verify
+│  │  │  └─ validate.js
+│  │  ├─ middleware/         # auth, rateLimit, errors
+│  │  ├─ repositories/
+│  │  │  └─ users.js         # only module that touches the users table
+│  │  └─ routes/             # auth.js, me.js
+│  ├─ scripts/               # create-tables, bench-bcrypt
+│  └─ test/                  # node --test
 ├─ infra/
-│  └─ template.yaml          # SAM: Lambda, schedule, buckets, table, CDN, IAM
+│  └─ template.yaml          # SAM: Lambda, schedule, buckets, tables, CDN, IAM
 ├─ scripts/
 │  ├─ smoke_text.py
 │  └─ smoke_image.py
@@ -67,6 +84,10 @@ Autonomous_Agent/
 **`web/` never imports from `agent/`.** The contract between them is the capsule JSON, documented in `docs/ARCHITECTURE.md`.
 
 **Pages compose, components render.** Data loading lives in `pages/` via `usePulseData`; components take props and never fetch. `App.tsx` is a route switch and nothing else.
+
+**In the backend, only `repositories/users.js` touches DynamoDB and only `lib/password.js` sees plaintext.** Routes never handle a hash. Every user object leaving the repository goes through `toPublicUser()`, which strips `passwordHash` — that single chokepoint is why a hash cannot leak into a response by accident.
+
+**The backend has no path to the agent.** No invoke permission, no shared table, no shared queue. Keep it that way.
 
 ## Naming
 

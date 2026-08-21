@@ -18,7 +18,7 @@ Region is **`us-east-1`** everywhere. Don't mix regions — Bedrock model availa
 Bedrock models are **off by default.** Nothing in this project works until access is granted.
 
 1. Bedrock console → `us-east-1` → **Model access**
-2. Request: `Anthropic Claude 3.5 Sonnet`, `Amazon Nova Canvas`
+2. Request: `Amazon Nova Pro`, `Amazon Nova Canvas`
 3. Wait for status **Granted** (usually a minute, occasionally longer)
 
 Verify from the terminal before deploying anything:
@@ -28,7 +28,7 @@ python scripts\smoke_text.py
 python scripts\smoke_image.py
 ```
 
-If Nova Canvas is still pending after an hour, set `IMAGE_MODEL_ID` to `amazon.titan-image-generator-v2:0` and carry on.
+Nova Canvas is the only text-to-image model available in this account, so there is no fallback to switch to. If its access stays pending, build the text path first — the agent publishes text-only capsules correctly by design.
 
 ---
 
@@ -44,7 +44,7 @@ Answers for `--guided`:
 
 | Prompt | Answer |
 |---|---|
-| Stack name | `creative-pulse` |
+| Stack name | `dreamforge` |
 | Region | `us-east-1` |
 | Confirm changes before deploy | `N` |
 | Allow SAM to create IAM roles | `Y` |
@@ -56,10 +56,10 @@ Subsequent deploys are just `sam build && sam deploy`.
 Stack outputs — note these down:
 
 ```
-ArtifactsBucketName    creative-pulse-artifacts-<account>
-WebBucketName          creative-pulse-web-<account>
+ArtifactsBucketName    dreamforge-artifacts-<account>
+WebBucketName          dreamforge-web-<account>
 DistributionDomain     dxxxxxxxxxxxxx.cloudfront.net
-FunctionName           creative-pulse-agent
+FunctionName           dreamforge-agent
 ```
 
 ---
@@ -74,7 +74,7 @@ Environment:
     ARTIFACTS_BUCKET: !Ref ArtifactsBucket
     HISTORY_TABLE: !Ref HistoryTable
     DISTRIBUTION_ID: !Ref Distribution
-    TEXT_MODEL_ID: anthropic.claude-3-5-sonnet-20241022-v2:0
+    TEXT_MODEL_ID: amazon.nova-pro-v1:0
     IMAGE_MODEL_ID: amazon.nova-canvas-v1:0
     CITY: Mumbai
     LATITUDE: "19.0760"
@@ -94,17 +94,17 @@ No secrets here. Open-Meteo needs no key and Bedrock uses the execution role, so
 Prove the agent works before trusting a schedule with it.
 
 ```cmd
-aws lambda invoke --function-name creative-pulse-agent --payload "{\"trigger\":\"manual.cli\"}" out.json
+aws lambda invoke --function-name dreamforge-agent --payload "{\"trigger\":\"manual.cli\"}" out.json
 type out.json
 ```
 
 Then verify all four things landed:
 
 ```cmd
-aws s3 ls s3://creative-pulse-artifacts-<account>/data/
-aws s3 ls s3://creative-pulse-artifacts-<account>/images/
-aws dynamodb scan --table-name creative-pulse-history --max-items 1
-aws logs tail /aws/lambda/creative-pulse-agent --since 10m
+aws s3 ls s3://dreamforge-artifacts-<account>/data/
+aws s3 ls s3://dreamforge-artifacts-<account>/images/
+aws dynamodb scan --table-name dreamforge-history --max-items 1
+aws logs tail /aws/lambda/dreamforge-agent --since 10m
 ```
 
 Download the image and actually look at it. An agent that publishes a corrupt PNG passes every automated check.
@@ -125,7 +125,7 @@ ScheduleExpressionTimezone: Asia/Kolkata
 Deploy, then wait. Don't invoke anything.
 
 ```cmd
-aws logs tail /aws/lambda/creative-pulse-agent --follow
+aws logs tail /aws/lambda/dreamforge-agent --follow
 ```
 
 You're looking for one line:
@@ -154,7 +154,7 @@ cd web
 npm install
 npm run build
 
-aws s3 sync dist/ s3://creative-pulse-web-<account>/ --delete
+aws s3 sync dist/ s3://dreamforge-web-<account>/ --delete
 aws cloudfront create-invalidation --distribution-id <dist-id> --paths "/*"
 ```
 
@@ -189,8 +189,8 @@ curl https://dxxxxxxxxxxxxx.cloudfront.net/data/latest.json
 The agent runs locally against real AWS — no emulators, no LocalStack. Bedrock has no local mode, so faking the rest buys nothing.
 
 ```cmd
-set ARTIFACTS_BUCKET=creative-pulse-artifacts-<account>
-set HISTORY_TABLE=creative-pulse-history
+set ARTIFACTS_BUCKET=dreamforge-artifacts-<account>
+set HISTORY_TABLE=dreamforge-history
 set AWS_REGION=us-east-1
 python -m agent.local_run
 ```
@@ -227,10 +227,10 @@ Point `VITE_DATA_BASE` at the live CloudFront domain and develop the UI against 
 ## Teardown
 
 ```cmd
-aws s3 rm s3://creative-pulse-artifacts-<account> --recursive
-aws s3 rm s3://creative-pulse-web-<account> --recursive
+aws s3 rm s3://dreamforge-artifacts-<account> --recursive
+aws s3 rm s3://dreamforge-web-<account> --recursive
 cd infra
-sam delete --stack-name creative-pulse
+sam delete --stack-name dreamforge
 ```
 
 ⚠️ Those `s3 rm --recursive` commands permanently delete every generated capsule and image, and `sam delete` removes the DynamoDB history table with it. There is no undo and no backup. **Only run this after the submission has been judged** — the archive is the evidence.

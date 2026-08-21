@@ -12,6 +12,14 @@ Bedrock model availability is widest here, and Nova Canvas is not in every regio
 
 ---
 
+## Accounts backend
+
+Node 20 + Express in `backend/`, deployed as a Lambda behind a Function URL. Users in DynamoDB, passwords hashed with bcrypt (`bcryptjs`, cost 12, SHA-256 pre-hashed to dodge the 72-byte truncation). Sessions are 2-hour HS256 JWTs.
+
+Full write-up, including the two known limitations, is in [`backend/README.md`](../backend/README.md).
+
+This service is deliberately isolated from the agent — no invoke permission, no shared table. Accounts and creativity are separate systems, so nothing a browser can reach is able to start a run.
+
 ## Agent runtime
 
 | Choice | Version | Why |
@@ -31,14 +39,44 @@ Nothing else. No LangChain, no agent framework. The loop is ~200 lines of explic
 
 | Purpose | Model ID | Notes |
 |---|---|---|
-| Theme decision + story + quote | `anthropic.claude-3-5-sonnet-20241022-v2:0` | Called via the **Converse API**, not `invoke_model` |
+| Theme decision + story + quote | `us.amazon.nova-lite-v1:0` | Called via the **Converse API**, not `invoke_model` |
 | Self-critique | same model, separate call | Cheap, and keeps the critic honest by not sharing context |
-| Image | `amazon.nova-canvas-v1:0` | Returns base64 PNG |
-| Image fallback | `amazon.titan-image-generator-v2:0` | Used if Nova Canvas access is not yet granted |
+| Image | `amazon.nova-canvas-v1:0` | Returns base64 PNG. **`LEGACY` lifecycle, not yet enabled** |
 
-**Use the Converse API for all text calls.** It gives one uniform request/response shape, so swapping Claude for Nova Pro later is a one-line change instead of a rewrite.
+### The text model was chosen by measurement
 
-⚠️ **Bedrock model access is not on by default.** Request access to Anthropic + Amazon models in the Bedrock console *first thing* — approval is usually instant but occasionally is not, and everything else is blocked behind it.
+`agent/scripts/probe_one.py` runs the real create prompt against one model per process and reports whether the output actually obeys "180–220 words of continuous prose". Results against this account:
+
+| Model | Words | In range | Prose | Latency |
+|---|---|---|---|---|
+| **`us.amazon.nova-lite-v1:0`** | **214** | ✅ | ✅ | 3.9 s |
+| `qwen.qwen3-32b-v1:0` | 207 | ✅ | ✅ | 3.9 s |
+| `zai.glm-4.7` | 210 | ✅ | ✅ | 8.3 s |
+| `deepseek.v3.2` | 222 | ✗ | ✅ | 6.6 s |
+| `global.amazon.nova-2-lite-v1:0` | 174 | ✗ | ✅ | 4.6 s |
+| `amazon.nova-pro-v1:0` | 147 | ✗ | ✅ | 3.2 s |
+
+**Nova Pro — the larger, more expensive model — obeyed the length constraint worst**, undershooting by a third. Bigger did not mean more obedient, which is exactly why this was measured rather than assumed. Nova Lite hits the target, is fast, and keeps the pipeline on Amazon models.
+
+`TEXT_MODEL_ID` is an env var, so switching to Qwen or GLM is a config change.
+
+⚠️ **Run each probe in its own process.** An earlier version of this script reloaded modules between candidates and silently attributed one model's output to another — the Bedrock client is built at module scope from config read at import time, so an in-process swap doesn't take effect.
+
+### Many models are closed to this account
+
+A large share of Bedrock models return:
+
+> Access denied. This Model is marked by provider as Legacy and you have not been actively using the model in the last 30 days.
+
+Confirmed denied: `amazon.nova-premier-v1:0`, `us.amazon.nova-premier-v1:0`, and **`amazon.nova-canvas-v1:0`**. No console request fixes this — access is grandfathered to accounts already using the model before it was marked legacy.
+
+⚠️ **Nova Canvas is not usable yet, and there is no substitute.** `list-foundation-models --by-output-modality IMAGE` returns 14 models. Thirteen are Stability *editing* tools — upscale, inpaint, outpaint, remove-background, style-transfer, control-sketch — and every one requires an input image. None generate from text alone. Nova Canvas is the only text-to-image generator, it carries `modelLifecycle.status: LEGACY`, and it has no `us.` inference profile, so direct on-demand invoke is the only route.
+
+The `ResourceNotFoundException` is the per-account access gate, not a wrong id. It has to be enabled in the Bedrock console. Because the model is `LEGACY`, that may not be possible on a newer account — so treat illustrations as at risk and the text path as the deliverable. A failed image publishes the capsule text-only with `image_key: null`, which the UI renders as a deliberate mood gradient.
+
+**Use the Converse API for all text calls.** It gives one uniform request/response shape, so swapping Nova Pro for another model later is a one-line change instead of a rewrite.
+
+⚠️ **Bedrock model access is not on by default.** Request access to the Amazon Nova models in the Bedrock console *first thing* — approval is usually instant but occasionally is not, and everything else is blocked behind it.
 
 ---
 
@@ -46,9 +84,9 @@ Nothing else. No LangChain, no agent framework. The loop is ~200 lines of explic
 
 | Service | Purpose |
 |---|---|
-| **S3** — `creative-pulse-artifacts` | Generated images + capsule JSON. Private bucket, read through CloudFront OAC only. |
-| **S3** — `creative-pulse-web` | Built React site. Also private + OAC. |
-| **DynamoDB** — `creative-pulse-history` | Agent memory and run history. On-demand billing. |
+| **S3** — `dreamforge-artifacts` | Generated images + capsule JSON. Private bucket, read through CloudFront OAC only. |
+| **S3** — `dreamforge-web` | Built React site. Also private + OAC. |
+| **DynamoDB** — `dreamforge-history` | Agent memory and run history. On-demand billing. |
 
 Neither bucket is public. Public S3 buckets are the #1 way a hackathon repo becomes a security incident — CloudFront Origin Access Control gives the same result with none of the exposure.
 
@@ -134,9 +172,10 @@ These lines are copy-pasted straight into the article as the **autonomous genera
 
 | Skipped | Reason |
 |---|---|
-| API Gateway | Nothing needs to be called from the browser |
-| Cognito / auth backend | The login flow is a browser-local demo session that protects nothing — see `D-019`. Real auth would be days of work serving none of the challenge gates. |
+| API Gateway | The accounts API runs behind a Lambda Function URL — plain HTTPS, one less service |
+| Cognito | Ruled out by request. Accounts are hand-rolled in `backend/` with bcrypt + DynamoDB (`D-022`), which means the security work is on us. |
 | react-router | A 30-line hash router covers four routes, and needs no CloudFront rewrite rules |
+| Native `bcrypt` | Compiles bindings that must match arm64 Amazon Linux; `bcryptjs` deploys anywhere (`D-023`) |
 | Step Functions | The loop is a few sequential calls; a state machine adds config, not capability |
 | RDS / Aurora | Wildly oversized for one JSON row a day |
 | Bedrock Agents | The custom loop is easier to explain and demo than a managed agent's traces |
@@ -148,6 +187,8 @@ Each row here is a sentence you can write in the article's architecture section.
 
 ## Cost
 
-One run a day: a few Bedrock calls, one image, a handful of KB in S3, two DynamoDB writes.
+The agent itself is nearly free: one run a day is a few Bedrock calls, one image, a handful of KB in S3, two DynamoDB writes. CloudFront and DynamoDB on-demand stay inside free tier at this volume, so Bedrock is the only real line item and it's cents.
 
-Comfortably **under $1/month.** CloudFront and DynamoDB on-demand stay inside free tier at this volume; Bedrock is the only real line item and it's cents.
+**The backend host dominates the bill.** Lambda behind a Function URL keeps the whole project under $1/month. **App Runner bills for a provisioned instance whether or not anyone visits** — roughly $5–25/month, and it doesn't sleep unless you explicitly pause the service.
+
+Full breakdown and the App Runner eligibility problem: [`IAM.md`](IAM.md).

@@ -1,0 +1,221 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  DreamForge — the autonomous creative agent. An EventBridge schedule invokes a
+  Lambda every morning; the Lambda decides what to make, makes it, and publishes.
+
+  Nothing else can start a run. There is no API, no Function URL, and no path
+  from a browser to this function — that is the point of the whole project.
+
+  Buckets, CloudFront and the DynamoDB tables are created by infra/provision.py
+  and passed in as parameters, because they already exist and re-declaring them
+  here would fail on create.
+
+Parameters:
+  ArtifactsBucket:
+    Type: String
+    Description: S3 bucket holding capsule JSON and visuals
+  HistoryTable:
+    Type: String
+    Default: dreamforge-history
+    Description: DynamoDB table for agent memory
+  DistributionId:
+    Type: String
+    Description: CloudFront distribution to invalidate after publishing
+  TextModelId:
+    Type: String
+    Default: us.amazon.nova-lite-v1:0
+    Description: >
+      Bedrock text model. Nova Lite was chosen by measurement — it obeys the
+      180-220 word instruction where the larger Nova Pro undershot it.
+  ImageModelId:
+    Type: String
+    Default: amazon.nova-canvas-v1:0
+    Description: >
+      Bedrock image model. Currently returns ResourceNotFoundException on this
+      account because it is marked LEGACY; the agent falls back to composing a
+      typographic SVG poster and keeps publishing.
+  City:
+    Type: String
+    Default: Mumbai, India
+  Latitude:
+    Type: String
+    Default: '19.0760'
+  Longitude:
+    Type: String
+    Default: '72.8777'
+  ScheduleExpression:
+    Type: String
+    Default: cron(0 8 * * ? *)
+    Description: >
+      THE AUTONOMY GATE. Set this a few minutes ahead to prove the trigger fires,
+      then put it back to 0 8. Never commit a test cron.
+  ScheduleTimezone:
+    Type: String
+    Default: Asia/Kolkata
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    Timeout: 120
+    # Memory is CPU on Lambda, not just RAM. 1024MB roughly halves JSON and
+    # base64 handling time versus 512MB.
+    MemorySize: 1024
+
+Resources:
+  # ── The agent ───────────────────────────────────────────────────────────────
+
+  AgentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: dreamforge-agent
+      CodeUri: ../agent/
+      Handler: handler.lambda_handler
+      Description: Decides, writes, illustrates and publishes one capsule per day
+      Environment:
+        Variables:
+          ARTIFACTS_BUCKET: !Ref ArtifactsBucket
+          HISTORY_TABLE: !Ref HistoryTable
+          DISTRIBUTION_ID: !Ref DistributionId
+          TEXT_MODEL_ID: !Ref TextModelId
+          IMAGE_MODEL_ID: !Ref ImageModelId
+          CITY: !Ref City
+          LATITUDE: !Ref Latitude
+          LONGITUDE: !Ref Longitude
+          TIMEZONE: !Ref ScheduleTimezone
+          MEMORY_WINDOW_DAYS: '7'
+          CRITIQUE_THRESHOLD: '7'
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt AgentDeadLetterQueue.Arn
+      Policies:
+        - Statement:
+            # A "us." inference profile is CROSS-REGION: the call may be served
+            # by any US region in the profile, and authorisation is evaluated
+            # against the foundation-model ARN in whichever region handles it.
+            # Listing only us-east-1 produced an AccessDenied naming us-west-2.
+            - Sid: InvokeNamedModelsOnly
+              Effect: Allow
+              Action: bedrock:InvokeModel
+              Resource:
+                - !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/us.amazon.nova-lite-v1:0
+                - arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-lite-v1:0
+                - arn:aws:bedrock:us-east-2::foundation-model/amazon.nova-lite-v1:0
+                - arn:aws:bedrock:us-west-2::foundation-model/amazon.nova-lite-v1:0
+                - arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-pro-v1:0
+                - arn:aws:bedrock:us-east-2::foundation-model/amazon.nova-pro-v1:0
+                - arn:aws:bedrock:us-west-2::foundation-model/amazon.nova-pro-v1:0
+                # Canvas is invoked directly, not through a cross-region profile.
+                - !Sub arn:aws:bedrock:${AWS::Region}::foundation-model/amazon.nova-canvas-v1:0
+
+            # Write only. Deliberately no s3:DeleteObject and no s3:GetObject —
+            # the agent only ever creates new objects, so no bug can destroy or
+            # read back the archive, and that archive is the submission evidence.
+            - Sid: WriteCapsulesAndVisuals
+              Effect: Allow
+              Action: s3:PutObject
+              Resource: !Sub arn:aws:s3:::${ArtifactsBucket}/*
+
+            - Sid: AgentMemory
+              Effect: Allow
+              Action:
+                - dynamodb:PutItem
+                - dynamodb:Query
+              Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${HistoryTable}
+
+            - Sid: PublishFreshCapsuleImmediately
+              Effect: Allow
+              Action: cloudfront:CreateInvalidation
+              Resource: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${DistributionId}
+
+            - Sid: DeadLetter
+              Effect: Allow
+              Action: sqs:SendMessage
+              Resource: !GetAtt AgentDeadLetterQueue.Arn
+
+  AgentLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AgentFunction}
+      # The run log is submission evidence. Keep it well past judging.
+      RetentionInDays: 30
+
+  # A failed run must be visible, not silent. Yesterday's latest.json stays live
+  # either way, so the site never breaks.
+  AgentDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: dreamforge-agent-dlq
+      MessageRetentionPeriod: 1209600  # 14 days
+
+  # ── The autonomy trigger ────────────────────────────────────────────────────
+  # The single most important resource in this template. EventBridge Scheduler
+  # rather than a classic Events rule, because it has a real timezone field —
+  # the cron reads 08:00 with no UTC arithmetic to get wrong.
+
+  AgentSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: dreamforge-daily
+      Description: Invokes the creative agent every morning. No human involved.
+      State: ENABLED
+      ScheduleExpression: !Ref ScheduleExpression
+      ScheduleExpressionTimezone: !Ref ScheduleTimezone
+      FlexibleTimeWindow:
+        Mode: 'OFF'
+      Target:
+        Arn: !GetAtt AgentFunction.Arn
+        RoleArn: !GetAtt SchedulerRole.Arn
+        # Recorded on the capsule as meta.trigger, so the archive proves which
+        # runs were scheduled and which were invoked by hand.
+        Input: '{"trigger": "eventbridge.schedule"}'
+        RetryPolicy:
+          # Bedrock throttles occasionally; a retry is cheaper than a missed day.
+          MaximumRetryAttempts: 2
+          MaximumEventAgeInSeconds: 3600
+        DeadLetterConfig:
+          Arn: !GetAtt AgentDeadLetterQueue.Arn
+
+  SchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dreamforge-scheduler-invoke
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                # Guards against the confused-deputy problem.
+                aws:SourceAccount: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: invoke-agent
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # One action. This role exists to start the agent and nothing else.
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource:
+                  - !GetAtt AgentFunction.Arn
+                  - !Sub '${AgentFunction.Arn}:*'
+
+Outputs:
+  FunctionName:
+    Description: Invoke this by hand to test; the schedule runs it daily
+    Value: !Ref AgentFunction
+  FunctionArn:
+    Value: !GetAtt AgentFunction.Arn
+  ScheduleName:
+    Description: The autonomy gate — check Next invocation in the console
+    Value: !Ref AgentSchedule
+  DeadLetterQueueUrl:
+    Description: Inspect this if a morning produces no capsule
+    Value: !Ref AgentDeadLetterQueue
+  LogGroup:
+    Description: Source of the autonomous-run log for the article
+    Value: !Ref AgentLogGroup

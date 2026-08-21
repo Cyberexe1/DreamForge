@@ -14,7 +14,7 @@ Fail any of these and nothing else matters.
 | 1 | Creative output generated **without manual user initiation** | EventBridge Scheduler → Lambda. No generate button exists in the UI. |
 | 2 | Uses at least one AWS service | Seven: EventBridge, Lambda, Bedrock, S3, DynamoDB, CloudFront, CloudWatch |
 | 3 | Article, 500+ words, six sections | See outline below |
-| 4 | Title format exact | `Weekend Creative Agent Challenge: Creative Pulse` |
+| 4 | Title format exact | `Weekend Creative Agent Challenge: DreamForge` |
 | 5 | Tag | `agents` |
 | 6 | Public repo **or** live app | Provide both |
 
@@ -25,14 +25,14 @@ Fail any of these and nothing else matters.
 Title, character for character:
 
 ```
-Weekend Creative Agent Challenge: Creative Pulse
+Weekend Creative Agent Challenge: DreamForge
 ```
 
 ### 1 · Vision & What It Does (~120 words)
 
 Open with the distinction, because it's the thing being judged:
 
-> Most AI creative tools wait for you. You open them, type a prompt, press a button. Creative Pulse doesn't wait. At 8:00 every morning it wakes up on its own, looks at the date and the weather, remembers what it made last week, decides what today should be about, and publishes a piece of art and a short story about it. There is no generate button on the website, because there is nothing for a visitor to initiate. By the time you arrive, the work is already done.
+> Most AI creative tools wait for you. You open them, type a prompt, press a button. DreamForge doesn't wait. At 8:00 every morning it wakes up on its own, looks at the date and the weather, remembers what it made last week, decides what today should be about, and publishes a piece of art and a short story about it. There is no generate button on the website, because there is nothing for a visitor to initiate. By the time you arrive, the work is already done.
 
 Then: what a capsule contains (theme, image, story, quote), and why the daily rhythm makes it creative rather than mechanical — the constraint of *having to make something new about the same rain* is the interesting part.
 
@@ -51,7 +51,7 @@ Embed the diagram. Walk the path once:
 
 ```
 EventBridge Scheduler → Lambda (7-step agent loop)
-   → Bedrock: Claude 3.5 Sonnet (decide, write, critique)
+   → Bedrock: Nova Pro (decide, write, critique)
    → Bedrock: Nova Canvas (image)
    → S3 (image + capsule JSON) + DynamoDB (memory)
    → CloudFront → React
@@ -93,7 +93,7 @@ Plus: EventBridge schedule screenshot, S3 listing with several dated capsules, a
 
 ```
 🔗 Live: https://<cloudfront-domain>
-💻 Repo: https://github.com/<user>/creative-pulse
+💻 Repo: https://github.com/<user>/dreamforge
 ```
 
 ---

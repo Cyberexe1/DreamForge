@@ -39,7 +39,7 @@ export function WaitingState({ onRetry }: { onRetry: () => void }) {
         aria-hidden="true"
         className="mx-auto grid h-14 w-14 place-items-center rounded-3xl border border-white/10 bg-white/[0.04] text-2xl"
       >
-        🌧️
+        ✦
       </span>
       <h2 className="mt-7 font-display text-3xl font-light text-white">
         The agent&apos;s latest work is on its way

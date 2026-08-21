@@ -2,7 +2,7 @@
 
 The difference between "an AI generator on a timer" and "an autonomous creative agent" is what happens between the trigger and the output. A generator does one thing: prompt in, text out. An agent **senses its environment, consults memory, makes a decision, evaluates its own work, and acts on that evaluation.**
 
-Creative Pulse does seven steps. Five of them involve a decision the code did not hardcode.
+DreamForge does seven steps. Five of them involve a decision the code did not hardcode.
 
 ```
    ┌──────────┐
@@ -73,7 +73,7 @@ Memory design detail: [`MEMORY.md`](MEMORY.md)
 
 `agent/steps/decide.py`
 
-The pivotal step. Context + memory go to Claude, which returns a structured decision:
+The pivotal step. Context + memory go to Nova Pro, which returns a structured decision:
 
 ```json
 {
@@ -103,7 +103,7 @@ Temperature is high (0.9) here. This is the one step where you want variance.
 
 Two Bedrock calls:
 
-**Text** — Claude gets the theme, mood, form, and context, and returns `title`, `story` (~200 words), `quote`.
+**Text** — Nova Pro gets the theme, mood, form, and context, and returns `title`, `story` (~200 words), `quote`.
 
 **Image** — the art prompt is assembled from `theme` + `art_direction` + `mood`, then sent to Nova Canvas. Notably the *model* wrote the art direction in step 3, so the image is anchored to the same creative decision as the story rather than being a separate interpretation of the weather.
 
@@ -122,7 +122,7 @@ image_prompt = (
 
 `agent/steps/critique.py`
 
-A **fresh** Claude call, given only the theme and the story, with no knowledge that it wrote them:
+A **fresh** Nova Pro call, given only the theme and the story, with no knowledge that it wrote them:
 
 ```json
 { "score": 6, "weakness": "The ending explains the metaphor instead of trusting it." }
@@ -187,4 +187,4 @@ Every step emits one structured log line. A real run produces the log that goes 
 
 You'll need this for the article, so here it is written once:
 
-> Creative Pulse is not a prompt on a timer. Each morning it gathers real-world signals it was not given in advance, reads its own history to see what it has already said, and then *decides* — theme, form, and visual direction — with a stated rationale. It generates the work, evaluates that work through an independent critic, and revises when the critic is unconvinced. Then it publishes and commits the result to memory, which constrains what it can do tomorrow. No human is in any part of that path. The website has no generate button, because there is nothing for a human to initiate.
+> DreamForge is not a prompt on a timer. Each morning it gathers real-world signals it was not given in advance, reads its own history to see what it has already said, and then *decides* — theme, form, and visual direction — with a stated rationale. It generates the work, evaluates that work through an independent critic, and revises when the critic is unconvinced. Then it publishes and commits the result to memory, which constrains what it can do tomorrow. No human is in any part of that path. The website has no generate button, because there is nothing for a human to initiate.

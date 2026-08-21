@@ -1,0 +1,30 @@
+{
+  "name": "dreamforge-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "scripts": {
+    "dev": "node --env-file=.env --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "smoke": "node scripts/smoke.mjs",
+    "bedrock:check": "node scripts/bedrock-check.mjs",
+    "tables:create": "node scripts/create-tables.mjs",
+    "bench:bcrypt": "node scripts/bench-bcrypt.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.687.0",
+    "@aws-sdk/client-dynamodb": "3.687.0",
+    "@aws-sdk/client-secrets-manager": "^3.687.0",
+    "@aws-sdk/lib-dynamodb": "3.687.0",
+    "bcryptjs": "2.4.3",
+    "cors": "2.8.5",
+    "express": "4.21.1",
+    "helmet": "8.0.0",
+    "jsonwebtoken": "9.0.2",
+    "serverless-http": "3.2.0"
+  }
+}

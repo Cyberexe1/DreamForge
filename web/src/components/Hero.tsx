@@ -44,7 +44,7 @@ export function Hero() {
           className="mt-6 max-w-xl text-base leading-relaxed text-slate-400 animate-reveal sm:text-lg"
           style={{ animationDelay: '120ms' }}
         >
-          Creative Pulse is an autonomous agent. Each morning it reads the date and the
+          DreamForge is an autonomous agent. Each morning it reads the date and the
           weather, remembers what it already made this week, decides what today should be
           about, writes it, illustrates it, and publishes.
           <span className="text-slate-300">

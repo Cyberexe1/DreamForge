@@ -1,0 +1,32 @@
+{
+  "_comment": [
+    "App Runner INSTANCE role — the permissions the running backend container has.",
+    "Attach to role dreamforge-apprunner-instance, trusted by",
+    "tasks.apprunner.amazonaws.com (see trust-apprunner-instance.json).",
+    "",
+    "Note what is absent and must stay absent: lambda:InvokeFunction. The backend",
+    "must have no path to the creative agent — the agent is started by its",
+    "schedule alone. Also absent: dynamodb:Scan (nothing needs a full table read)",
+    "and any access to the history table (that belongs to the agent)."
+  ],
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "UsersTableItemAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem"
+      ],
+      "Resource": "arn:aws:dynamodb:us-east-1:<ACCOUNT_ID>:table/dreamforge-users"
+    },
+    {
+      "Sid": "ReadJwtSecret",
+      "Effect": "Allow",
+      "Action": ["secretsmanager:GetSecretValue"],
+      "Resource": "arn:aws:secretsmanager:us-east-1:<ACCOUNT_ID>:secret:dreamforge/jwt-secret-*"
+    }
+  ]
+}

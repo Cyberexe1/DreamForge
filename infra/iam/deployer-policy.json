@@ -1,0 +1,195 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BucketLifecycle",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:PutBucketPolicy",
+        "s3:GetBucketPolicy",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:PutEncryptionConfiguration",
+        "s3:GetEncryptionConfiguration",
+        "s3:PutBucketTagging",
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": [
+        "arn:aws:s3:::dreamforge-artifacts-<ACCOUNT_ID>",
+        "arn:aws:s3:::dreamforge-web-<ACCOUNT_ID>"
+      ]
+    },
+    {
+      "Sid": "SiteAndArtifactObjects",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+      "Resource": [
+        "arn:aws:s3:::dreamforge-artifacts-<ACCOUNT_ID>/*",
+        "arn:aws:s3:::dreamforge-web-<ACCOUNT_ID>/*"
+      ]
+    },
+    {
+      "Sid": "CloudFrontDistributionAndOac",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:CreateDistribution",
+        "cloudfront:UpdateDistribution",
+        "cloudfront:GetDistribution",
+        "cloudfront:GetDistributionConfig",
+        "cloudfront:ListDistributions",
+        "cloudfront:TagResource",
+        "cloudfront:CreateOriginAccessControl",
+        "cloudfront:GetOriginAccessControl",
+        "cloudfront:ListOriginAccessControls",
+        "cloudfront:CreateInvalidation",
+        "cloudfront:GetInvalidation",
+        "cloudfront:CreateCachePolicy",
+        "cloudfront:ListCachePolicies",
+        "cloudfront:CreateResponseHeadersPolicy",
+        "cloudfront:ListResponseHeadersPolicies"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DynamoDbTables",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:CreateTable",
+        "dynamodb:DescribeTable",
+        "dynamodb:UpdateTable",
+        "dynamodb:UpdateTimeToLive",
+        "dynamodb:DescribeTimeToLive",
+        "dynamodb:TagResource",
+        "dynamodb:ListTagsOfResource"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:us-east-1:<ACCOUNT_ID>:table/dreamforge-users",
+        "arn:aws:dynamodb:us-east-1:<ACCOUNT_ID>:table/dreamforge-history"
+      ]
+    },
+    {
+      "Sid": "DynamoDbListing",
+      "Effect": "Allow",
+      "Action": ["dynamodb:ListTables"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AgentLambdaAndSchedule",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:CreateFunction",
+        "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration",
+        "lambda:GetFunction",
+        "lambda:GetFunctionConfiguration",
+        "lambda:AddPermission",
+        "lambda:RemovePermission",
+        "lambda:InvokeFunction",
+        "lambda:TagResource",
+        "lambda:ListVersionsByFunction",
+        "lambda:PublishVersion"
+      ],
+      "Resource": "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:dreamforge-*"
+    },
+    {
+      "Sid": "EventBridgeScheduler",
+      "Effect": "Allow",
+      "Action": [
+        "scheduler:CreateSchedule",
+        "scheduler:UpdateSchedule",
+        "scheduler:GetSchedule",
+        "scheduler:ListSchedules",
+        "scheduler:TagResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AppRunnerService",
+      "Effect": "Allow",
+      "Action": [
+        "apprunner:CreateService",
+        "apprunner:UpdateService",
+        "apprunner:DescribeService",
+        "apprunner:ListServices",
+        "apprunner:StartDeployment",
+        "apprunner:PauseService",
+        "apprunner:ResumeService",
+        "apprunner:TagResource",
+        "apprunner:CreateConnection",
+        "apprunner:ListConnections",
+        "apprunner:CreateAutoScalingConfiguration",
+        "apprunner:DescribeAutoScalingConfiguration"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EcrForContainerBackend",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:CreateRepository",
+        "ecr:DescribeRepositories",
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:CompleteLayerUpload",
+        "ecr:InitiateLayerUpload",
+        "ecr:PutImage",
+        "ecr:UploadLayerPart",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:SetRepositoryPolicy",
+        "ecr:TagResource"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "JwtSecret",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:CreateSecret",
+        "secretsmanager:PutSecretValue",
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:TagResource"
+      ],
+      "Resource": "arn:aws:secretsmanager:us-east-1:<ACCOUNT_ID>:secret:dreamforge/*"
+    },
+    {
+      "Sid": "BedrockSmokeTests",
+      "Effect": "Allow",
+      "Action": ["bedrock:InvokeModel", "bedrock:ListFoundationModels"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Observability",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "logs:GetLogEvents",
+        "logs:FilterLogEvents",
+        "logs:PutRetentionPolicy"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SamCloudFormation",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateStack",
+        "cloudformation:UpdateStack",
+        "cloudformation:DescribeStacks",
+        "cloudformation:DescribeStackEvents",
+        "cloudformation:DescribeStackResources",
+        "cloudformation:GetTemplateSummary",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:ListStackResources",
+        "cloudformation:ValidateTemplate"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

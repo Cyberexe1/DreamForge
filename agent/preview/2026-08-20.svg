@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1382" height="896" viewBox="0 0 1382 896" role="img" aria-label="Nine Floors of Nobody">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#1b2140"/>
+      <stop offset="1" stop-color="#0a0c16"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="53%" cy="19%" r="65%">
+      <stop offset="0" stop-color="#8fa2cc" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#8fa2cc" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1382" height="896" fill="url(#bg)"/>
+  <rect width="1382" height="896" fill="url(#glow)"/>
+  <circle cx="464" cy="891" r="180" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="891" x2="1382" y2="891" stroke="#8e97b4" stroke-width="1" opacity="0.05"/>
+  <circle cx="541" cy="808" r="209" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <circle cx="758" cy="507" r="293" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="507" x2="1382" y2="507" stroke="#8e97b4" stroke-width="1" opacity="0.05"/>
+  <circle cx="735" cy="429" r="268" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <circle cx="1130" cy="166" r="166" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="166" x2="1382" y2="166" stroke="#8e97b4" stroke-width="1" opacity="0.05"/>
+  <text x="88" y="92" font-family="Helvetica, Arial, sans-serif" font-size="19" letter-spacing="5" fill="#8fa2cc" opacity="0.85">DREAMFORGE ✦ THURSDAY · 2026-08-20</text>
+  <text x="88" y="232" font-family="Georgia, serif" font-size="62" letter-spacing="1.5" fill="#f2f4fa">CONCRETE SILENCE</text>
+  <line x1="88" y1="266" x2="256" y2="266" stroke="#8fa2cc" stroke-width="3"/>
+  <text x="88" y="342" font-family="Georgia, serif" font-size="29" font-style="italic" fill="#8fa2cc">Nine Floors of Nobody</text>
+  <text x="88" y="660" font-family="Georgia, serif" font-size="25" fill="#8e97b4">The lift announced each floor to no one in particular.</text>
+  <text x="88" y="834" font-family="Helvetica, Arial, sans-serif" font-size="16" letter-spacing="3.5" fill="#8e97b4" opacity="0.75">MONSOON · MUMBAI, INDIA · SOLEMN</text>
+</svg>

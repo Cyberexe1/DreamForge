@@ -1,0 +1,28 @@
+{
+  "_comment": [
+    "App Runner ACCESS role, for pulling a container image from ECR.",
+    "Only needed if the backend is deployed as a container rather than from",
+    "source. Attach the AWS managed policy",
+    "arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess",
+    "to the role using this trust policy.",
+    "",
+    "Note the different principal from the instance role: build.apprunner",
+    "pulls the image, tasks.apprunner runs it."
+  ],
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AppRunnerBuildAssume",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "build.apprunner.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "aws:SourceAccount": "<ACCOUNT_ID>"
+        }
+      }
+    }
+  ]
+}

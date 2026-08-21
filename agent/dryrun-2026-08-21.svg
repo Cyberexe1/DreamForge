@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1382" height="896" viewBox="0 0 1382 896" role="img" aria-label="Sprays of Joy">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#1b2140"/>
+      <stop offset="1" stop-color="#0a0c16"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="47%" cy="17%" r="65%">
+      <stop offset="0" stop-color="#8fa2cc" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#8fa2cc" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1382" height="896" fill="url(#bg)"/>
+  <rect width="1382" height="896" fill="url(#glow)"/>
+  <circle cx="28" cy="386" r="390" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="386" x2="1382" y2="386" stroke="#8e97b4" stroke-width="1" opacity="0.05"/>
+  <circle cx="641" cy="654" r="232" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <circle cx="470" cy="342" r="393" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="342" x2="1382" y2="342" stroke="#8e97b4" stroke-width="1" opacity="0.05"/>
+  <circle cx="1167" cy="332" r="154" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <circle cx="198" cy="690" r="139" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="690" x2="1382" y2="690" stroke="#8e97b4" stroke-width="1" opacity="0.05"/>
+  <text x="88" y="92" font-family="Helvetica, Arial, sans-serif" font-size="19" letter-spacing="5" fill="#8fa2cc" opacity="0.85">DREAMFORGE ✦ FRIDAY · 2026-08-21</text>
+  <text x="691" y="340" text-anchor="middle" font-family="Georgia, serif" font-size="62" letter-spacing="2" fill="#f2f4fa">SPILLS OF COLOR</text>
+  <line x1="621" y1="380" x2="761" y2="380" stroke="#8fa2cc" stroke-width="2"/>
+  <text x="691" y="454" text-anchor="middle" font-family="Georgia, serif" font-size="29" font-style="italic" fill="#8fa2cc">Sprays of Joy</text>
+  <text x="691" y="692" text-anchor="middle" font-family="Georgia, serif" font-size="25" fill="#8e97b4">See that splash of blue? It’s like the sky breaking open.</text>
+  <text x="88" y="834" font-family="Helvetica, Arial, sans-serif" font-size="16" letter-spacing="3.5" fill="#8e97b4" opacity="0.75">MONSOON · MUMBAI, INDIA · UPLIFTING VIBRANT</text>
+</svg>

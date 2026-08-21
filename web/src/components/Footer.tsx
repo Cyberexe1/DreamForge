@@ -21,10 +21,10 @@ export function Footer() {
                 aria-hidden="true"
                 className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-pulse-400 to-pulse-500 text-sm"
               >
-                🌧️
+                ✦
               </span>
               <span className="font-display text-base font-semibold text-white">
-                Creative Pulse
+                DreamForge
               </span>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-slate-500">

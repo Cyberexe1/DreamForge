@@ -24,12 +24,22 @@ export interface CapsuleModels {
   image: string | null;
 }
 
+/**
+ * How the capsule's visual was produced.
+ *   diffusion — a real generated image from an image model
+ *   poster    — an agent-composed typographic SVG
+ *   null      — text-only capsule
+ * Never present a poster as generated artwork.
+ */
+export type ImageKind = 'diffusion' | 'poster';
+
 export interface CapsuleMeta {
   generated_at: string;
   trigger: TriggerSource | string;
   critique_score: number | null;
   revisions: number;
   duration_ms: number;
+  image_kind: ImageKind | null;
   models: CapsuleModels;
 }
 

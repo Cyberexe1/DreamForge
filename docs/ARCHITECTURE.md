@@ -11,7 +11,7 @@
                                         │ scheduled invoke
                                         ▼
         ┌───────────────────────────────────────────────────────────┐
-        │            AWS Lambda · creative-pulse-agent              │
+        │            AWS Lambda · dreamforge-agent              │
         │            Python 3.12 · arm64 · 1024MB · 120s            │
         │                                                           │
         │   sense ─► recall ─► decide ─► create ─► critique ─►       │
@@ -23,7 +23,7 @@
             ▼              ▼              ▼               ▼
     ┌───────────────┐ ┌──────────┐ ┌──────────────┐ ┌──────────────┐
     │  Open-Meteo   │ │ Bedrock  │ │  DynamoDB    │ │      S3      │
-    │  weather API  │ │ Claude + │ │  history +   │ │  artifacts   │
+    │  weather API  │ │ Nova Pro │ │  history +   │ │  artifacts   │
     │  (no auth)    │ │  Nova    │ │  memory      │ │  images/json │
     └───────────────┘ └──────────┘ └──────────────┘ └──────┬───────┘
                                                             │
@@ -53,10 +53,10 @@ Read the diagram left to right: **nothing points from the browser back into the 
 | 2 | +0.2s | Lambda | Cold start, loads config from env vars |
 | 3 | +1s | `sense` | Date, weekday, season, Open-Meteo weather for the configured city |
 | 4 | +2s | `recall` | DynamoDB query: last 7 capsules → recent themes list |
-| 5 | +5s | `decide` | Bedrock/Claude picks theme, mood, output form, avoiding recent themes |
-| 6 | +12s | `create` | Bedrock/Claude writes title + story + quote |
+| 5 | +5s | `decide` | Bedrock/Nova Pro picks theme, mood, output form, avoiding recent themes |
+| 6 | +12s | `create` | Bedrock/Nova Pro writes title + story + quote |
 | 7 | +25s | `create` | Bedrock/Nova Canvas renders the image from a theme-derived art prompt |
-| 8 | +30s | `critique` | Second Claude call scores the story 1–10 against the theme |
+| 8 | +30s | `critique` | Second Nova Pro call scores the story 1–10 against the theme |
 | 9 | +40s | `revise` | Only if score < 7 — one rewrite pass, then accept regardless |
 | 10 | +44s | `publish` | PNG → S3, capsule JSON → S3 (`latest.json` + dated), row → DynamoDB |
 | 11 | +45s | `publish` | CloudFront invalidation for `/data/*` |
@@ -67,7 +67,7 @@ Typical end-to-end: **40–60 seconds.** Timeout is 120 s so a slow image call c
 
 ## S3 layout
 
-### Artifacts bucket — `creative-pulse-artifacts`
+### Artifacts bucket — `dreamforge-artifacts`
 
 ```
 /data/latest.json          ← today's capsule (the frontend's homepage)
@@ -80,7 +80,7 @@ Typical end-to-end: **40–60 seconds.** Timeout is 120 s so a slow image call c
 
 `latest.json` is overwritten daily; dated files are write-once. That means the archive is append-only and a bad run can never destroy history.
 
-### Web bucket — `creative-pulse-web`
+### Web bucket — `dreamforge-web`
 
 Vite build output. `index.html` + hashed assets.
 
@@ -124,21 +124,26 @@ This shape is the interface between the agent and the frontend. Change it in `ag
   "title": "The City That Waited for Rain",
   "story": "Once the rain arrived, the city remembered...",
   "quote": "Some cities do not wait for rain. They rehearse for it.",
-  "image_key": "images/2026-08-21.png",
-  "image_prompt": "A rain-soaked Mumbai street at dawn, ...",
+  "image_key": "images/2026-08-21.svg",
+  "image_prompt": null,
   "meta": {
     "generated_at": "2026-08-21T08:00:45Z",
     "trigger": "eventbridge.schedule",
     "critique_score": 8,
     "revisions": 0,
     "duration_ms": 45120,
+    "image_kind": "poster",
     "models": {
-      "text": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-      "image": "amazon.nova-canvas-v1:0"
+      "text": "us.amazon.nova-lite-v1:0",
+      "image": null
     }
   }
 }
 ```
+
+`meta.image_kind` records **how** the visual was made — `diffusion` for a real generated image, `poster` for an agent-composed typographic SVG, `null` for text-only. The UI captions each accordingly. A poster is legitimate design work but it is not generated artwork, and a reader can open the SVG source, so it must never be labelled as one.
+
+`image_prompt` is only set for `diffusion`. Attaching an art prompt to a poster would describe something that was never made.
 
 `reasoning` comes straight from the `decide` step and is rendered in the UI. It's the cheapest way to show that a decision actually happened rather than a template being filled — an evaluator can read the agent's justification for today's theme in its own words.
 
@@ -153,10 +158,10 @@ The Lambda execution role gets exactly these, no wildcards on resources:
 ```yaml
 - bedrock:InvokeModel
     Resource:
-      - arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0
+      - arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-pro-v1:0
       - arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-canvas-v1:0
 - s3:PutObject
-    Resource: arn:aws:s3:::creative-pulse-artifacts/*
+    Resource: arn:aws:s3:::dreamforge-artifacts/*
 - dynamodb:PutItem, dynamodb:Query
     Resource: <history table arn>
 - cloudfront:CreateInvalidation

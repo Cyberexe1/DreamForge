@@ -8,17 +8,33 @@ Full rationale in `docs/TECH_STACK.md`. These are the rules to follow while writ
 |---|---|
 | Region | `us-east-1`, everywhere |
 | Agent | Python 3.12, AWS Lambda (arm64, 1024 MB, 120 s) |
-| Text model | `anthropic.claude-3-5-sonnet-20241022-v2:0` via **Converse API** |
-| Image model | `amazon.nova-canvas-v1:0` (fallback `amazon.titan-image-generator-v2:0`) |
-| Storage | S3 (artifacts + web), DynamoDB (`creative-pulse-history`) |
+| Text model | `us.amazon.nova-lite-v1:0` via **Converse API** — chosen by measurement, see `agent/scripts/probe_one.py` |
+| Image model | `amazon.nova-canvas-v1:0` — **no fallback exists in this account** |
+| Storage | S3 (artifacts + web), DynamoDB (`dreamforge-history`) |
 | Schedule | EventBridge Scheduler |
 | IaC | AWS SAM, single `infra/template.yaml` |
 | Frontend | React 18 + Vite 5 + TypeScript + Tailwind 3 |
 | Weather | Open-Meteo (no API key) |
 
+## Backend (`backend/`)
+
+Node 20 + Express, ESM JavaScript. Runs locally via `src/server.js`, in AWS as a Lambda behind a **Function URL** via `src/lambda.js` and `serverless-http` — not API Gateway.
+
+| Concern | Choice |
+|---|---|
+| Passwords | `bcryptjs` (pure JS, no native build), cost 12, SHA-256 pre-hashed first |
+| Sessions | HS256 JWT, 2 h expiry, `jsonwebtoken` |
+| Storage | DynamoDB `dreamforge-users`, partition key `email` |
+| Headers / CORS | `helmet` + `cors` with an explicit origin allowlist |
+| Tests | `node --test`, no framework |
+
+`bcryptjs` not `bcrypt`: the native package compiles bindings that must match arm64 Amazon Linux, so a module built on Windows won't load in Lambda.
+
+The SHA-256 pre-hash exists because bcrypt silently truncates at 72 bytes. Don't remove it — there's a test that proves the truncation is gone.
+
 ## Don't add
 
-No agent frameworks (LangChain, CrewAI), no API Gateway, no Cognito or auth backend, no Step Functions, no SQS/SNS beyond the DLQ, no RDS, no ORM. The dependency list is `requests` plus the runtime's `boto3`. If a task seems to need a new dependency, raise it before installing.
+No agent frameworks (LangChain, CrewAI), no API Gateway, no Cognito, no Step Functions, no SQS/SNS beyond the DLQ, no RDS, no ORM. Agent deps are `requests` plus the runtime's `boto3`. If a task seems to need a new dependency, raise it before installing.
 
 The frontend routes with a ~30-line hash router in `src/lib/router.ts`, not `react-router`. Hash routing also means CloudFront needs no SPA error-page rewrites.
 
@@ -68,4 +84,5 @@ Bedrock `ThrottlingException` gets exponential backoff, 3 attempts. Other Bedroc
 - `web/src/types.ts` mirrors the capsule contract in `docs/ARCHITECTURE.md`. Change both in the same commit.
 - No `any`. Narrow the fetched JSON at the boundary.
 - Handle `image_key: null` — text-only capsules are a valid state, not an error.
-- `src/auth.ts` is a local session marker, not authentication. Don't extend it, don't gate anything real behind it, and keep the demo banner on the auth pages.
+- Capsules come from CloudFront via `src/api.ts`; accounts come from the Node API via `src/lib/backend.ts`. Two separate origins, never mixed.
+- All auth state flows through `src/auth.ts`. Components read it with `useAuth()` and never touch the token.

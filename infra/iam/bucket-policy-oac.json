@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "S3 BUCKET policy (a resource policy, not a role) granting CloudFront read",
+    "access via Origin Access Control. Apply to both dreamforge-web-* and",
+    "dreamforge-artifacts-*, changing the bucket name each time.",
+    "",
+    "This is what lets both buckets stay fully private with Block Public Access",
+    "on while still serving the public site. The AWS:SourceArn condition is the",
+    "load-bearing part: without it, any CloudFront distribution in any account",
+    "could read the bucket."
+  ],
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowCloudFrontServicePrincipalReadOnly",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "cloudfront.amazonaws.com"
+      },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::dreamforge-web-<ACCOUNT_ID>/*",
+      "Condition": {
+        "StringEquals": {
+          "AWS:SourceArn": "arn:aws:cloudfront::<ACCOUNT_ID>:distribution/<DISTRIBUTION_ID>"
+        }
+      }
+    }
+  ]
+}

@@ -8,7 +8,7 @@ Pull this in with `#article` when drafting or editing the submission post. Full 
 
 ## Non-negotiables
 
-- Title, character for character: `Weekend Creative Agent Challenge: Creative Pulse`
+- Title, character for character: `Weekend Creative Agent Challenge: DreamForge`
 - Tag: `agents`
 - 500+ words minimum — count it, don't estimate
 - Six sections: Vision & What It Does · How You Built It · AWS Services / Architecture · What You Learned · Evidence · Links

@@ -10,13 +10,13 @@ Ordering principle: **get one real autonomous run on AWS as early as possible, t
 
 Everything else waits behind these. Do them before writing a line of code.
 
-- [ ] Bedrock console → **request model access** for Anthropic Claude 3.5 Sonnet and Amazon Nova Canvas in `us-east-1`
+- [ ] Bedrock console → **request model access** for Amazon Nova Pro and Amazon Nova Canvas in `us-east-1`
 - [ ] Confirm access is `Granted`, not `Pending`
 - [ ] `aws sts get-caller-identity` works from the terminal
 - [ ] `sam --version` and `node --version` present
 - [ ] Create the public GitHub repo, push this docs folder
 
-> If Nova Canvas access is pending past an hour, switch to `titan-image-generator-v2` and move on. Do not wait.
+> Nova Canvas has no fallback in this account. If its access is still pending, build the text path first and let the agent publish text-only — that path already works by design. Do not wait idle.
 
 ---
 
@@ -113,7 +113,7 @@ Multiple days of history is the strongest possible proof. If you only have one, 
 - [ ] `git log` is clean; repo is public; clone it fresh and check nothing's missing
 
 ### 3.3 The article (2 hrs)
-- [ ] Title exactly: `Weekend Creative Agent Challenge: Creative Pulse`
+- [ ] Title exactly: `Weekend Creative Agent Challenge: DreamForge`
 - [ ] Tag: `agents`
 - [ ] 500+ words across all six required sections
 - [ ] Autonomous generation log pasted in

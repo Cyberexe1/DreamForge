@@ -1,4 +1,5 @@
 import { imageUrl } from '../api';
+import { posterAspect } from '../lib/poster';
 import { shortDate } from '../lib/schedule';
 import type { ArchiveEntry } from '../types';
 
@@ -35,14 +36,16 @@ export function ArchiveStrip({
                          bg-white/[0.03] transition-all duration-300 hover:border-white/20
                          hover:bg-white/[0.06]"
             >
-              <div className="aspect-[4/3] overflow-hidden bg-ink-850">
+              {/* Same ratio as the poster canvas — object-cover on a different
+                  ratio would crop words off a typographic visual. */}
+              <div style={posterAspect} className="overflow-hidden bg-ink-850">
                 {entry.image_key ? (
                   <img
                     src={imageUrl(entry.image_key)}
-                    alt={`Artwork for ${entry.title}`}
+                    alt={`Visual for ${entry.title}`}
                     loading="lazy"
                     decoding="async"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.04]"
                   />
                 ) : (
                   <div className="grid h-full w-full place-items-center bg-gradient-to-br from-slate-800 to-ink-900">

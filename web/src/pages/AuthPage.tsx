@@ -1,60 +1,72 @@
 import { useEffect, useState } from 'react';
-import { EMAIL_PATTERN, MIN_PASSWORD_LENGTH, startSession, useSession } from '../auth';
+import {
+  EMAIL_PATTERN,
+  MIN_PASSWORD_LENGTH,
+  logIn,
+  signUp,
+  useAuth,
+} from '../auth';
+import { ApiError, type FieldErrors } from '../lib/backend';
 import { href, navigate } from '../lib/router';
 
 type Mode = 'login' | 'signup';
 
-interface Errors {
-  name?: string;
-  email?: string;
-  password?: string;
-}
-
-/**
- * Local-session sign-in. Deliberately does not talk to a server — see the
- * warning at the top of src/auth.ts and D-019 in docs/MEMORY.md. The password
- * field is validated for length and then discarded; it is never stored or sent.
- */
 export function AuthPage({ mode }: { mode: Mode }) {
-  const session = useSession();
+  const auth = useAuth();
   const isSignup = mode === 'signup';
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<Errors>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Already signed in? Nothing to do here.
   useEffect(() => {
-    if (session) navigate('/dashboard');
-  }, [session]);
+    if (auth.status === 'authenticated') navigate('/dashboard');
+  }, [auth.status]);
 
-  function validate(): Errors {
-    const next: Errors = {};
+  /** Cheap pre-flight only. The server is the authority on validity. */
+  function localErrors(): FieldErrors {
+    const errors: FieldErrors = {};
     if (isSignup && name.trim().length < 2) {
-      next.name = 'Tell us what to call you — at least two characters.';
+      errors.name = 'Tell us what to call you.';
     }
     if (!EMAIL_PATTERN.test(email.trim())) {
-      next.email = 'That does not look like an email address.';
+      errors.email = 'That does not look like an email address.';
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
-      next.password = `At least ${MIN_PASSWORD_LENGTH} characters.`;
+      errors.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
     }
-    return next;
+    return errors;
   }
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSubmitted(true);
+    setFormError(null);
 
-    const found = validate();
-    setErrors(found);
+    const found = localErrors();
+    setFieldErrors(found);
     if (Object.keys(found).length > 0) return;
 
-    startSession(email, isSignup ? name : undefined);
-    setPassword('');
-    navigate('/dashboard');
+    setSubmitting(true);
+    try {
+      if (isSignup) await signUp({ name: name.trim(), email: email.trim(), password });
+      else await logIn({ email: email.trim(), password });
+
+      setPassword('');
+      navigate('/dashboard');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setFieldErrors(err.fields);
+        // Field-level messages render inline; only show a banner without them.
+        if (Object.keys(err.fields).length === 0) setFormError(err.message);
+      } else {
+        setFormError('Something went wrong. Try again.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -70,18 +82,18 @@ export function AuthPage({ mode }: { mode: Mode }) {
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-400">
           {isSignup
-            ? 'Your dashboard tracks what the agent has published and when it next wakes up.'
+            ? 'Keep the capsules you like and track what the agent has published.'
             : 'Pick up where the agent left off.'}
         </p>
 
-        {/* Honesty banner. This is not real authentication and must not read like it is. */}
-        <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] p-4">
-          <p className="text-xs leading-relaxed text-amber-200/90">
-            <strong className="font-semibold">Demo access.</strong> This sign-in is local to
-            your browser. There is no auth server, no account is created, and your password
-            is never stored or transmitted. Everything the dashboard shows is public.
+        {formError && (
+          <p
+            role="alert"
+            className="mt-6 rounded-2xl border border-rose-400/25 bg-rose-400/[0.07] px-4 py-3 text-sm text-rose-200"
+          >
+            {formError}
           </p>
-        </div>
+        )}
 
         <form onSubmit={onSubmit} noValidate className="mt-7 space-y-5">
           {isSignup && (
@@ -93,7 +105,8 @@ export function AuthPage({ mode }: { mode: Mode }) {
               placeholder="Ada Lovelace"
               value={name}
               onChange={setName}
-              error={submitted ? errors.name : undefined}
+              error={fieldErrors.name}
+              disabled={submitting}
             />
           )}
 
@@ -105,7 +118,8 @@ export function AuthPage({ mode }: { mode: Mode }) {
             placeholder="you@example.com"
             value={email}
             onChange={setEmail}
-            error={submitted ? errors.email : undefined}
+            error={fieldErrors.email}
+            disabled={submitting}
           />
 
           <Field
@@ -113,14 +127,16 @@ export function AuthPage({ mode }: { mode: Mode }) {
             label="Password"
             type="password"
             autoComplete={isSignup ? 'new-password' : 'current-password'}
-            placeholder="At least 8 characters"
+            placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
             value={password}
             onChange={setPassword}
-            error={submitted ? errors.password : undefined}
+            error={fieldErrors.password}
+            disabled={submitting}
+            hint={isSignup ? 'Longer beats complicated. A short sentence works well.' : undefined}
           />
 
-          <button type="submit" className="btn-primary w-full py-3">
-            {isSignup ? 'Create account' : 'Log in'}
+          <button type="submit" disabled={submitting} className="btn-primary w-full py-3">
+            {submitting ? 'One moment…' : isSignup ? 'Create account' : 'Log in'}
           </button>
         </form>
 
@@ -153,6 +169,8 @@ function Field({
   value,
   onChange,
   error,
+  hint,
+  disabled,
 }: {
   id: string;
   label: string;
@@ -162,8 +180,11 @@ function Field({
   value: string;
   onChange: (v: string) => void;
   error?: string | undefined;
+  hint?: string | undefined;
+  disabled?: boolean;
 }) {
   const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
 
   return (
     <div>
@@ -177,17 +198,24 @@ function Field({
         autoComplete={autoComplete}
         placeholder={placeholder}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={error ? errorId : hint ? hintId : undefined}
         className={`mt-2 w-full rounded-2xl border bg-ink-950/60 px-4 py-3 text-sm text-white
-                    placeholder:text-slate-600 transition-colors
+                    placeholder:text-slate-600 transition-colors disabled:opacity-60
                     ${error ? 'border-rose-400/50' : 'border-white/10 hover:border-white/20'}`}
       />
-      {error && (
+      {error ? (
         <p id={errorId} role="alert" className="mt-2 text-xs text-rose-300">
           {error}
         </p>
+      ) : (
+        hint && (
+          <p id={hintId} className="mt-2 text-xs text-slate-600">
+            {hint}
+          </p>
+        )
       )}
     </div>
   );

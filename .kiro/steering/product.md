@@ -1,4 +1,4 @@
-# Product: Creative Pulse
+# Product: DreamForge
 
 An autonomous creative agent. Every morning at 08:00 IST it publishes a **Daily Creative Capsule** — a theme it chose, an AI image, a ~200 word story or poem, and a quote — with no human involvement.
 
@@ -21,14 +21,18 @@ If a request would create a user-triggered generation path, say so and propose t
 
 This applies to the dashboard too. The dashboard observes published output — it has no control that can start a run, schedule one, or influence what gets made.
 
-## Local sessions are not authentication
+## Accounts are real, and separate from the agent
 
-There is a login/signup flow and a dashboard, added at the user's request (`D-019`). It is a **browser-local session marker only**: no auth server, no account, no password stored or transmitted.
+`backend/` is a Node/Express API storing users in DynamoDB with bcrypt-hashed passwords (`D-022`). It is **not** Cognito, by request.
 
-- Never describe it as authentication, security, or account management in UI copy or docs
-- Never put anything behind it that actually needs protecting — everything it shows is public JSON
-- The honesty banner on the auth pages stays. Don't remove or soften it.
-- Don't extend `src/auth.ts`. If real auth is ever needed, replace it with Amazon Cognito.
+The hard boundary: the backend knows about users and bookmarks. It has no path to the agent — no invoke permission, no shared queue, no shared table. The agent is started by its schedule alone. Any change that gives the API a way to reach the agent breaks the submission's core claim and must be refused.
+
+Security rules that are not negotiable, since real credentials are involved:
+- Passwords only ever hashed through `backend/src/lib/password.js`. Never store, log, or return plaintext.
+- `passwordHash` never leaves `backend/src/repositories/users.js` — everything goes through `toPublicUser()`.
+- Login returns one identical error for unknown email and wrong password.
+- `JWT_SECRET` comes from Secrets Manager in AWS, never from the SAM template or a plain env var.
+- Never log passwords, tokens, or hashes. User IDs only.
 
 ## Autonomy must stay provable
 

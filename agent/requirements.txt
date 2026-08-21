@@ -1,0 +1,10 @@
+# Intentionally empty.
+#
+# The agent has zero third-party dependencies:
+#   - boto3 / botocore come from the Lambda Python runtime. Vendoring them bloats
+#     the package and drifts from the runtime version.
+#   - the weather call uses urllib from the standard library rather than requests,
+#     so there is nothing to pip install, no layer, and no packaging step.
+#
+# That means `sam build` produces a package of pure source files, which removes
+# an entire category of deployment failure.

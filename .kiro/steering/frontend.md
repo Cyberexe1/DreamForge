@@ -22,14 +22,26 @@ Hash router in `src/lib/router.ts`. Anything not starting with `#/` is an in-pag
 | Route | Page |
 |---|---|
 | `/` | Landing — hero, today's capsule, agent status, loop, archive |
-| `/login`, `/signup` | `AuthPage`, local session only |
+| `/login`, `/signup` | `AuthPage`, real accounts via the Node API |
 | `/dashboard` | Read-only console over published output |
 
-The dashboard redirects to `/login` without a session. That's UX, not access control — everything it displays is public.
+The dashboard redirects to `/login` when `useAuth()` reports `anonymous`. That redirect is UX; the real enforcement is server-side on every `/api/me` route.
 
-## The login flow is a demo, and must say so
+## Auth
 
-`src/auth.ts` writes a session marker to `localStorage`. No server, no account, no password retained. The amber notice on the auth pages is required copy — never remove it, and never write UI text that implies real accounts or security.
+`src/auth.ts` is the single source of auth state, backed by the Node API in `backend/`. Components call `useAuth()` and get one of three states:
+
+| State | Render |
+|---|---|
+| `loading` | Placeholder sized like the real control, so the layout can't reflow |
+| `authenticated` | `auth.user` is a full profile from DynamoDB |
+| `anonymous` | Log in / Sign up |
+
+Rules:
+- Never read or write the token outside `src/lib/backend.ts`
+- Never put a password in component state longer than the submit needs, and clear it after
+- Server field errors come back in `ApiError.fields` keyed by input name — render them inline on the matching field, not as a banner
+- A 401 on an authenticated request clears the token automatically; don't duplicate that logic
 
 ## Data access
 
@@ -86,4 +98,6 @@ Animation budget: one fade-in on the daily reveal. Nothing else.
 
 ## Env
 
-`VITE_DATA_BASE` only. Commit `.env.example`, never `.env`. Nothing secret belongs in a client bundle, and this app authenticates to nothing — keep it that way.
+`VITE_DATA_BASE` (capsules via CloudFront), `VITE_API_BASE` (accounts API), `VITE_REPO_URL`. Commit `.env.example`, never `.env`.
+
+Nothing secret belongs in a client bundle. The bundle holds no API key — the only credential is the user's own bearer token, obtained at login and held by `src/lib/backend.ts`.

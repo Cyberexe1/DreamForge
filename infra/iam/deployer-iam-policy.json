@@ -1,0 +1,95 @@
+{
+  "_comment": [
+    "Separate from deployer-policy.json on purpose. IAM write access is a",
+    "privilege-escalation path: anyone who can create a role and attach",
+    "AdministratorAccess to it is effectively an admin. Every statement here is",
+    "narrowed by name prefix, and role creation is fenced by a permissions",
+    "boundary so a created role can never exceed the deployer's own reach.",
+    "Delete this policy once the stack is deployed and stable."
+  ],
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CreateProjectRolesOnlyWithBoundary",
+      "Effect": "Allow",
+      "Action": ["iam:CreateRole", "iam:PutRolePermissionsBoundary"],
+      "Resource": "arn:aws:iam::<ACCOUNT_ID>:role/dreamforge-*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PermissionsBoundary": "arn:aws:iam::<ACCOUNT_ID>:policy/DreamForgeBoundary"
+        }
+      }
+    },
+    {
+      "Sid": "ManageProjectRoles",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:ListRoles",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:PutRolePolicy",
+        "iam:GetRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:TagRole"
+      ],
+      "Resource": "arn:aws:iam::<ACCOUNT_ID>:role/dreamforge-*"
+    },
+    {
+      "Sid": "AttachOnlyProjectManagedPolicies",
+      "Effect": "Allow",
+      "Action": ["iam:AttachRolePolicy", "iam:DetachRolePolicy"],
+      "Resource": "arn:aws:iam::<ACCOUNT_ID>:role/dreamforge-*",
+      "Condition": {
+        "ArnLike": {
+          "iam:PolicyARN": [
+            "arn:aws:iam::<ACCOUNT_ID>:policy/DreamForge*",
+            "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+            "arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ManageProjectManagedPolicies",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreatePolicy",
+        "iam:CreatePolicyVersion",
+        "iam:DeletePolicyVersion",
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicyVersions"
+      ],
+      "Resource": "arn:aws:iam::<ACCOUNT_ID>:policy/DreamForge*"
+    },
+    {
+      "Sid": "PassOnlyProjectRolesToNamedServices",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::<ACCOUNT_ID>:role/dreamforge-*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": [
+            "lambda.amazonaws.com",
+            "scheduler.amazonaws.com",
+            "tasks.apprunner.amazonaws.com",
+            "build.apprunner.amazonaws.com"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ServiceLinkedRolesForAppRunner",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "iam:AWSServiceName": ["apprunner.amazonaws.com"]
+        }
+      }
+    }
+  ]
+}

@@ -43,8 +43,9 @@ Above him, a window opened and someone shook out a cloth, and the light in the w
     critique_score: 8,
     revisions: 1,
     duration_ms: 45120,
+    image_kind: 'poster',
     models: {
-      text: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+      text: 'us.amazon.nova-lite-v1:0',
       image: 'amazon.nova-canvas-v1:0',
     },
   },

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1382" height="896" viewBox="0 0 1382 896" role="img" aria-label="She said &quot;goodbye&quot; &amp; meant it">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#1b2140"/>
+      <stop offset="1" stop-color="#0a0c16"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="71%" cy="37%" r="65%">
+      <stop offset="0" stop-color="#8fa2cc" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#8fa2cc" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1382" height="896" fill="url(#bg)"/>
+  <rect width="1382" height="896" fill="url(#glow)"/>
+  <circle cx="850" cy="641" r="302" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="641" x2="1382" y2="641" stroke="#8e97b4" stroke-width="1" opacity="0.05"/>
+  <circle cx="1127" cy="35" r="200" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <circle cx="702" cy="369" r="241" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="369" x2="1382" y2="369" stroke="#8e97b4" stroke-width="1" opacity="0.05"/>
+  <circle cx="301" cy="290" r="371" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <circle cx="1158" cy="615" r="174" fill="none" stroke="#8fa2cc" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="615" x2="1382" y2="615" stroke="#8e97b4" stroke-width="1" opacity="0.05"/>
+  <text x="88" y="92" font-family="Helvetica, Arial, sans-serif" font-size="19" letter-spacing="5" fill="#8fa2cc" opacity="0.85">DREAMFORGE ✦ SUNDAY · 2026-08-16</text>
+  <text x="88" y="236" font-family="Georgia, serif" font-size="28" font-style="italic" fill="#8e97b4">An unescaped ampersand &amp; a bracket &gt; should not break this.</text>
+  <text x="88" y="640" font-family="Georgia, serif" font-size="62" letter-spacing="1.5" fill="#f2f4fa">RAIN &amp; RUIN &lt;AFTER THE FACT&gt;</text>
+  <line x1="88" y1="670" x2="228" y2="670" stroke="#8fa2cc" stroke-width="3"/>
+  <text x="88" y="730" font-family="Georgia, serif" font-size="26" font-style="italic" fill="#8fa2cc">She said &quot;goodbye&quot; &amp; meant it</text>
+  <text x="88" y="834" font-family="Helvetica, Arial, sans-serif" font-size="16" letter-spacing="3.5" fill="#8e97b4" opacity="0.75">MONSOON · MUMBAI, INDIA · ENTIRELY INVENTED MOOD</text>
+</svg>

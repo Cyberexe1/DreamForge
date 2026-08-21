@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1382" height="896" viewBox="0 0 1382 896" role="img" aria-label="Seat 4B, Westbound">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#242830"/>
+      <stop offset="1" stop-color="#0d0e12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="57%" cy="25%" r="65%">
+      <stop offset="0" stop-color="#9fa8b4" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#9fa8b4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1382" height="896" fill="url(#bg)"/>
+  <rect width="1382" height="896" fill="url(#glow)"/>
+  <circle cx="24" cy="880" r="116" fill="none" stroke="#9fa8b4" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="880" x2="1382" y2="880" stroke="#8b939e" stroke-width="1" opacity="0.05"/>
+  <circle cx="857" cy="45" r="236" fill="none" stroke="#9fa8b4" stroke-width="1" opacity="0.06"/>
+  <circle cx="78" cy="43" r="244" fill="none" stroke="#9fa8b4" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="43" x2="1382" y2="43" stroke="#8b939e" stroke-width="1" opacity="0.05"/>
+  <circle cx="1183" cy="37" r="225" fill="none" stroke="#9fa8b4" stroke-width="1" opacity="0.06"/>
+  <circle cx="914" cy="420" r="150" fill="none" stroke="#9fa8b4" stroke-width="1" opacity="0.06"/>
+  <line x1="0" y1="420" x2="1382" y2="420" stroke="#8b939e" stroke-width="1" opacity="0.05"/>
+  <text x="88" y="92" font-family="Helvetica, Arial, sans-serif" font-size="19" letter-spacing="5" fill="#9fa8b4" opacity="0.85">DREAMFORGE ✦ WEDNESDAY · 2026-08-19</text>
+  <text x="88" y="236" font-family="Georgia, serif" font-size="28" font-style="italic" fill="#8b939e">He had memorised the shape of the window's scratch.</text>
+  <text x="88" y="640" font-family="Georgia, serif" font-size="62" letter-spacing="1.5" fill="#f1f3f6">THE LONG COMMUTE HOME</text>
+  <line x1="88" y1="670" x2="228" y2="670" stroke="#9fa8b4" stroke-width="3"/>
+  <text x="88" y="730" font-family="Georgia, serif" font-size="26" font-style="italic" fill="#9fa8b4">Seat 4B, Westbound</text>
+  <text x="88" y="834" font-family="Helvetica, Arial, sans-serif" font-size="16" letter-spacing="3.5" fill="#8b939e" opacity="0.75">MONSOON · MUMBAI, INDIA · WEARY</text>
+</svg>

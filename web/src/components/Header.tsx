@@ -1,4 +1,4 @@
-import { endSession, initials, useSession } from '../auth';
+import { initials, logOut, useAuth } from '../auth';
 import { href, navigate, useRoute } from '../lib/router';
 
 const NAV = [
@@ -15,7 +15,7 @@ const NAV = [
  * See .kiro/steering/product.md.
  */
 export function Header() {
-  const session = useSession();
+  const auth = useAuth();
   const route = useRoute();
   const onDashboard = route === '/dashboard';
 
@@ -30,18 +30,18 @@ export function Header() {
         <a
           href={href('/')}
           className="flex shrink-0 items-center gap-2.5 rounded-full pl-1 pr-1 sm:gap-3 sm:pr-2"
-          aria-label="Creative Pulse, home"
+          aria-label="DreamForge, home"
         >
           <span
             aria-hidden="true"
             className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br
                        from-pulse-400 to-pulse-500 text-base shadow-lg shadow-pulse-500/25"
           >
-            🌧️
+            ✦
           </span>
           <span className="flex flex-col leading-none">
             <span className="font-display text-[0.975rem] font-semibold tracking-tight text-white">
-              Creative Pulse
+              DreamForge
             </span>
             <span className="mt-0.5 hidden text-[11px] text-slate-500 sm:block">
               Autonomous, daily
@@ -71,7 +71,15 @@ export function Header() {
           Agent active
         </span>
 
-        {session ? (
+        {auth.status === 'loading' && (
+          // Placeholder sized like the buttons, so the bar doesn't reflow on load.
+          <div
+            aria-hidden="true"
+            className="ml-auto h-10 w-32 shrink-0 animate-pulse rounded-full bg-white/[0.06] lg:ml-0"
+          />
+        )}
+
+        {auth.status === 'authenticated' && (
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0">
             {!onDashboard && (
               <a href={href('/dashboard')} className="btn-primary px-4 py-2 sm:px-5 sm:py-2.5">
@@ -79,18 +87,18 @@ export function Header() {
               </a>
             )}
 
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] p-1 pl-1 pr-1">
+            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
               <span
-                title={session.email}
+                title={auth.user.email}
                 className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br
                            from-pulse-400 to-pulse-500 text-[11px] font-semibold text-ink-950"
               >
-                {initials(session.name)}
+                {initials(auth.user.name)}
               </span>
               <button
                 type="button"
                 onClick={() => {
-                  endSession();
+                  logOut();
                   navigate('/');
                 }}
                 className="rounded-full px-3 py-1.5 text-xs text-slate-400 transition-colors
@@ -100,7 +108,9 @@ export function Header() {
               </button>
             </div>
           </div>
-        ) : (
+        )}
+
+        {auth.status === 'anonymous' && (
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0">
             <a
               href={href('/login')}

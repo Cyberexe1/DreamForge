@@ -1,112 +1,135 @@
 import { useEffect, useState } from 'react';
+import { request, setToken, getToken } from './lib/backend';
 
 /**
- * ⚠️  THIS IS NOT AUTHENTICATION.
- *
- * There is no auth server in this project. This is a browser-local session
- * marker so the dashboard has a signed-in state to render. Specifically:
- *
- *   - no credentials are ever sent anywhere
- *   - no password is stored, hashed or otherwise
- *   - anyone can create a "session" by typing any valid-looking email
- *   - clearing site data removes it
- *
- * That is acceptable here only because it gates nothing. Every capsule on the
- * site is public, the dashboard is a read-only view of that same public JSON,
- * and no user data exists to protect.
- *
- * If this ever needs to guard something real, replace this file wholesale with
- * Amazon Cognito (Hosted UI + an authorizer on a real API). Do not extend it.
- * See D-019 in docs/MEMORY.md.
+ * Real accounts, backed by the Node API in backend/ and DynamoDB.
+ * Passwords are bcrypt-hashed server-side; nothing sensitive is held here.
  */
-
-const STORAGE_KEY = 'cp.session.v1';
-
-export interface Session {
+export interface User {
+  userId: string;
   email: string;
   name: string;
-  /** ISO timestamp the local session was created. */
-  since: string;
+  createdAt: string;
+  lastLoginAt: string | null;
+  savedDates: string[];
+  loginCount: number;
 }
 
-const listeners = new Set<(session: Session | null) => void>();
+interface AuthResponse {
+  token: string;
+  user: User;
+}
 
-function read(): Session | null {
+interface MeResponse {
+  user: User;
+}
+
+export type AuthState =
+  | { status: 'loading'; user: null }
+  | { status: 'authenticated'; user: User }
+  | { status: 'anonymous'; user: null };
+
+const listeners = new Set<(state: AuthState) => void>();
+
+let state: AuthState = { status: getToken() ? 'loading' : 'anonymous', user: null };
+let bootstrapped = false;
+
+function publish(next: AuthState): void {
+  state = next;
+  for (const listener of listeners) listener(next);
+}
+
+/** Restores the session from a stored token by re-reading the profile. */
+async function bootstrap(): Promise<void> {
+  if (bootstrapped) return;
+  bootstrapped = true;
+
+  if (!getToken()) {
+    publish({ status: 'anonymous', user: null });
+    return;
+  }
+
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      typeof (parsed as Session).email === 'string' &&
-      typeof (parsed as Session).name === 'string'
-    ) {
-      return parsed as Session;
-    }
-    return null;
+    const { user } = await request<MeResponse>('/api/me', { auth: true });
+    publish({ status: 'authenticated', user });
   } catch {
-    // Corrupt or unavailable storage (private mode, quota). Treat as signed out.
-    return null;
+    // request() already cleared an invalid token.
+    publish({ status: 'anonymous', user: null });
   }
 }
 
-function write(session: Session | null): void {
-  try {
-    if (session) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
-  } catch {
-    // Storage unavailable. The in-memory notification below still fires, so the
-    // UI stays consistent for this page view.
-  }
-  for (const listener of listeners) listener(session);
+export async function signUp(input: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<User> {
+  const { token, user } = await request<AuthResponse>('/api/auth/signup', {
+    method: 'POST',
+    body: input,
+  });
+  setToken(token);
+  publish({ status: 'authenticated', user });
+  return user;
 }
 
-export function getSession(): Session | null {
-  return read();
+export async function logIn(input: { email: string; password: string }): Promise<User> {
+  const { token, user } = await request<AuthResponse>('/api/auth/login', {
+    method: 'POST',
+    body: input,
+  });
+  setToken(token);
+  publish({ status: 'authenticated', user });
+  return user;
 }
 
-/**
- * Creates the local session. The password argument is validated for shape by
- * the caller and deliberately never accepted here — there is nothing to send
- * it to, and storing it would be indefensible.
- */
-export function startSession(email: string, name?: string): Session {
-  const trimmed = email.trim().toLowerCase();
-  const session: Session = {
-    email: trimmed,
-    name: name?.trim() || nameFromEmail(trimmed),
-    since: new Date().toISOString(),
-  };
-  write(session);
-  return session;
+export function logOut(): void {
+  setToken(null);
+  publish({ status: 'anonymous', user: null });
+  // Fire-and-forget; tokens are stateless so there is nothing to revoke.
+  void request('/api/auth/logout', { method: 'POST' }).catch(() => {});
 }
 
-export function endSession(): void {
-  write(null);
+export async function updateName(name: string): Promise<User> {
+  const { user } = await request<MeResponse>('/api/me', {
+    method: 'PATCH',
+    body: { name },
+    auth: true,
+  });
+  publish({ status: 'authenticated', user });
+  return user;
 }
 
-export function useSession(): Session | null {
-  const [session, setSession] = useState<Session | null>(() => read());
+export async function saveCapsule(date: string): Promise<User> {
+  const { user } = await request<MeResponse>(`/api/me/saved/${date}`, {
+    method: 'PUT',
+    auth: true,
+  });
+  publish({ status: 'authenticated', user });
+  return user;
+}
+
+export async function unsaveCapsule(date: string): Promise<User> {
+  const { user } = await request<MeResponse>(`/api/me/saved/${date}`, {
+    method: 'DELETE',
+    auth: true,
+  });
+  publish({ status: 'authenticated', user });
+  return user;
+}
+
+export function useAuth(): AuthState {
+  const [current, setCurrent] = useState<AuthState>(state);
 
   useEffect(() => {
-    listeners.add(setSession);
-    // Keep tabs in sync if storage changes elsewhere.
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY || e.key === null) setSession(read());
-    };
-    window.addEventListener('storage', onStorage);
-
+    listeners.add(setCurrent);
+    setCurrent(state);
+    void bootstrap();
     return () => {
-      listeners.delete(setSession);
-      window.removeEventListener('storage', onStorage);
+      listeners.delete(setCurrent);
     };
   }, []);
 
-  return session;
+  return current;
 }
 
 export function initials(name: string): string {
@@ -116,14 +139,6 @@ export function initials(name: string): string {
   return (first + second).toUpperCase();
 }
 
-function nameFromEmail(email: string): string {
-  const local = email.split('@')[0] ?? 'Reader';
-  return local
-    .replace(/[._-]+/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-    .trim();
-}
-
-/** Shape checks only. Not security. */
+/** Client-side shape checks. The server validates authoritatively. */
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-export const MIN_PASSWORD_LENGTH = 8;
+export const MIN_PASSWORD_LENGTH = 10;
