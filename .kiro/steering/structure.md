@@ -20,13 +20,30 @@ Autonomous_Agent/
 │  └─ requirements.txt
 ├─ web/                      # React + Vite frontend (read-only)
 │  ├─ src/
-│  │  ├─ App.tsx
+│  │  ├─ App.tsx             # route switch only
 │  │  ├─ types.ts            # mirrors the capsule contract
 │  │  ├─ api.ts              # fetch latest.json / index.json
+│  │  ├─ auth.ts             # local session marker — NOT authentication
+│  │  ├─ config.ts           # non-secret build-time config
+│  │  ├─ mock.ts             # dev-only fixture
+│  │  ├─ lib/
+│  │  │  ├─ router.ts        # hash router
+│  │  │  ├─ schedule.ts      # next run, IST formatting
+│  │  │  ├─ mood.ts          # mood → gradient
+│  │  │  └─ usePulseData.ts  # shared capsule + archive loader
+│  │  ├─ pages/
+│  │  │  ├─ Home.tsx
+│  │  │  ├─ AuthPage.tsx     # login + signup, one component
+│  │  │  └─ Dashboard.tsx    # read-only console
 │  │  └─ components/
+│  │     ├─ Header.tsx       # rounded floating bar, auth CTAs
+│  │     ├─ Hero.tsx
 │  │     ├─ CapsuleHero.tsx
-│  │     ├─ AgentStatus.tsx  # last run, next run, trigger, score
-│  │     └─ ArchiveStrip.tsx
+│  │     ├─ AgentStatus.tsx  # last run, next run, trigger, score, reasoning
+│  │     ├─ HowItWorks.tsx
+│  │     ├─ ArchiveStrip.tsx
+│  │     ├─ States.tsx       # loading skeleton + waiting state
+│  │     └─ Footer.tsx
 │  └─ .env.example
 ├─ infra/
 │  └─ template.yaml          # SAM: Lambda, schedule, buckets, table, CDN, IAM
@@ -48,6 +65,8 @@ Autonomous_Agent/
 **`bedrock.py` is the only module that talks to Bedrock.** Steps call its wrappers, never `boto3.client("bedrock-runtime")` directly.
 
 **`web/` never imports from `agent/`.** The contract between them is the capsule JSON, documented in `docs/ARCHITECTURE.md`.
+
+**Pages compose, components render.** Data loading lives in `pages/` via `usePulseData`; components take props and never fetch. `App.tsx` is a route switch and nothing else.
 
 ## Naming
 

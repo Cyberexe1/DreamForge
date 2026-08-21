@@ -135,7 +135,8 @@ These lines are copy-pasted straight into the article as the **autonomous genera
 | Skipped | Reason |
 |---|---|
 | API Gateway | Nothing needs to be called from the browser |
-| Cognito / auth | No user accounts. No accounts, no auth surface. |
+| Cognito / auth backend | The login flow is a browser-local demo session that protects nothing — see `D-019`. Real auth would be days of work serving none of the challenge gates. |
+| react-router | A 30-line hash router covers four routes, and needs no CloudFront rewrite rules |
 | Step Functions | The loop is a few sequential calls; a state machine adds config, not capability |
 | RDS / Aurora | Wildly oversized for one JSON row a day |
 | Bedrock Agents | The custom loop is easier to explain and demo than a managed agent's traces |

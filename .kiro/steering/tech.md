@@ -18,7 +18,9 @@ Full rationale in `docs/TECH_STACK.md`. These are the rules to follow while writ
 
 ## Don't add
 
-No agent frameworks (LangChain, CrewAI), no API Gateway, no auth, no Step Functions, no SQS/SNS beyond the DLQ, no RDS, no ORM. The dependency list is `requests` plus the runtime's `boto3`. If a task seems to need a new dependency, raise it before installing.
+No agent frameworks (LangChain, CrewAI), no API Gateway, no Cognito or auth backend, no Step Functions, no SQS/SNS beyond the DLQ, no RDS, no ORM. The dependency list is `requests` plus the runtime's `boto3`. If a task seems to need a new dependency, raise it before installing.
+
+The frontend routes with a ~30-line hash router in `src/lib/router.ts`, not `react-router`. Hash routing also means CloudFront needs no SPA error-page rewrites.
 
 ## Python conventions
 
@@ -66,3 +68,4 @@ Bedrock `ThrottlingException` gets exponential backoff, 3 attempts. Other Bedroc
 - `web/src/types.ts` mirrors the capsule contract in `docs/ARCHITECTURE.md`. Change both in the same commit.
 - No `any`. Narrow the fetched JSON at the boundary.
 - Handle `image_key: null` — text-only capsules are a valid state, not an error.
+- `src/auth.ts` is a local session marker, not authentication. Don't extend it, don't gate anything real behind it, and keep the demo banner on the auth pages.

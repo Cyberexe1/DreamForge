@@ -13,6 +13,24 @@ No generate button, no regenerate, no "make another", no prompt input, no theme 
 
 The absence of a generate button is a judged feature, not an omission. If a task asks for one, say why it can't be built and offer the read-only alternative.
 
+Buttons that only re-read published JSON ("Check again", "Refresh view") are fine — they cannot reach the agent. Buttons that imply commissioning work are not.
+
+## Routes
+
+Hash router in `src/lib/router.ts`. Anything not starting with `#/` is an in-page anchor, so landing anchors (`#today`, `#archive`) still work from any route.
+
+| Route | Page |
+|---|---|
+| `/` | Landing — hero, today's capsule, agent status, loop, archive |
+| `/login`, `/signup` | `AuthPage`, local session only |
+| `/dashboard` | Read-only console over published output |
+
+The dashboard redirects to `/login` without a session. That's UX, not access control — everything it displays is public.
+
+## The login flow is a demo, and must say so
+
+`src/auth.ts` writes a session marker to `localStorage`. No server, no account, no password retained. The amber notice on the auth pages is required copy — never remove it, and never write UI text that implies real accounts or security.
+
 ## Data access
 
 Two files, both `GET`, both from `VITE_DATA_BASE`:

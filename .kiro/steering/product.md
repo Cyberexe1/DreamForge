@@ -11,13 +11,24 @@ Built for the Weekend Creative Agent Challenge (Aug 21–24, 2026).
 The challenge requires creative output "without manual user initiation." This is the eligibility gate, so it wins every design argument.
 
 Concretely:
-- ❌ Never add a generate/create/regenerate button to the frontend
+- ❌ Never add a generate/create/regenerate/"run now" button to the frontend
 - ❌ Never add an API endpoint, Function URL, or any callable path that triggers the agent
 - ❌ Never add form inputs that shape the output
 - ✅ The frontend is strictly read-only: it fetches JSON and renders it
 - ✅ Manual runs happen through the AWS CLI only, tagged `meta.trigger = "manual.cli"`
 
 If a request would create a user-triggered generation path, say so and propose the read-only alternative instead of building it.
+
+This applies to the dashboard too. The dashboard observes published output — it has no control that can start a run, schedule one, or influence what gets made.
+
+## Local sessions are not authentication
+
+There is a login/signup flow and a dashboard, added at the user's request (`D-019`). It is a **browser-local session marker only**: no auth server, no account, no password stored or transmitted.
+
+- Never describe it as authentication, security, or account management in UI copy or docs
+- Never put anything behind it that actually needs protecting — everything it shows is public JSON
+- The honesty banner on the auth pages stays. Don't remove or soften it.
+- Don't extend `src/auth.ts`. If real auth is ever needed, replace it with Amazon Cognito.
 
 ## Autonomy must stay provable
 

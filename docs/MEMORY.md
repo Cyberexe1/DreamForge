@@ -127,6 +127,43 @@ The capsule JSON references `image_key`. Writing the PNG first means a mid-publi
 **Decided:** Aug 21
 Waiting until tomorrow morning to discover the scheduler is misconfigured wastes a third of the available window. Prove the trigger works within minutes, then set the real cron.
 
+### D-015 · `reasoning` is part of the capsule contract, and it's shown in the UI
+**Decided:** Aug 21
+`decide` already produces a justification for the day's theme. Persisting it and rendering it turns "the agent makes decisions" from a claim in the article into something a visitor reads in the agent's own words. Cost is one string; it resolves Q-3 in favour of showing it. Added to the contract in `ARCHITECTURE.md` and to `web/src/types.ts` in the same pass. Nullable, so a `decide` fallback that produces no reasoning still publishes.
+
+### D-016 · Frontend written by hand, not scaffolded by `npm create vite`
+**Decided:** Aug 21
+The interactive scaffolder prompts and then installs a template that has to be stripped back anyway. Writing the ten config and source files directly was faster and produced no dead boilerplate.
+
+### D-017 · Dev-only mock fixture, never in production builds
+**Decided:** Aug 21
+The UI had to be buildable before the agent's first run existed. `VITE_USE_MOCK` is gated on `import.meta.env.DEV` as well as the flag, so a production bundle cannot serve invented work as the agent's output. The fixture is tagged `local.dev` so even in dev it's visibly labelled as not a real run.
+
+### D-018 · Header CTA is "View on GitHub", not any form of generate
+**Decided:** Aug 21
+A header needed a primary button. Anything resembling generate/refresh-content would undercut `D-001` at the exact spot an evaluator looks first. Linking the public repo is genuinely useful to a judge and creates no trigger path. The one button that does touch data is "Check again" in the waiting state, which re-fetches published JSON and cannot invoke the agent.
+
+### D-019 · Login/signup and a dashboard, as a browser-local demo session
+**Decided:** Aug 21 · supersedes the "no auth" line in `D-003`-era scoping
+Requested directly, against the original no-accounts scoping. Real authentication means Cognito plus an authorizer plus a protected API — days of work, and it serves none of the three challenge gates.
+
+Built instead: `src/auth.ts` writes a session marker to `localStorage`. No auth server, no account, no password stored or transmitted. Defensible **only** because it protects nothing — every capsule is public, and the dashboard is a read-only view of the same public JSON the landing page reads.
+
+Guardrails, all enforced in steering:
+- an amber notice on both auth pages states plainly that it isn't real sign-in
+- the dashboard has no control that can start, schedule, or shape a run — `D-001` holds
+- `src/auth.ts` carries a header comment saying replace-with-Cognito, don't extend
+
+The honesty banner matters more than the feature. A judge reading "demo access, local to your browser" sees deliberate scoping; a judge discovering fake auth presented as real sees something much worse.
+
+### D-020 · GitHub link moved from header to footer only
+**Decided:** Aug 21
+The header needed the space for Log in / Sign up. The repo link stays in the footer, so the submission link a judge needs is still reachable from every page.
+
+### D-021 · Hash router, hand-written, no react-router
+**Decided:** Aug 21
+About thirty lines in `src/lib/router.ts`. Two reasons over path routing: the site is static on S3/CloudFront and path routes would need custom error-page rewrites on the distribution, and treating any hash without a leading `/` as an in-page anchor let the existing `#today` / `#archive` links keep working untouched.
+
 ---
 
 ## Open questions
@@ -135,7 +172,7 @@ Waiting until tomorrow morning to discover the scheduler is misconfigured wastes
 |---|---|---|
 | Q-1 | Nova Canvas access granted, or fall back to Titan v2? | Check in Phase 0 |
 | Q-2 | Is 200 words the right story length for the hero layout? | Decide when the UI exists |
-| Q-3 | Show the agent's `reasoning` text in the UI, or keep it in the archive detail view? | Leaning show — it's the clearest proof of decision-making |
+| Q-3 | Show the agent's `reasoning` text in the UI, or keep it in the archive detail view? | ✅ Resolved — shown in the agent status panel, see `D-015` |
 | Q-4 | Backfill a few past days for a fuller archive screenshot? | Acceptable only with honest `meta.trigger` |
 
 ---

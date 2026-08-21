@@ -71,13 +71,18 @@ This is the step that turns the project from a generator into an agent. It's als
 - [ ] `human_input=none` and `trigger` on the first line
 - [ ] Confirm the log reads well in CloudWatch — you're pasting it into the article
 
-### 2.3 Frontend (3 hrs)
-- [ ] `npm create vite@latest web -- --template react-ts`, Tailwind
-- [ ] `types.ts` mirroring the capsule contract
-- [ ] Hero: date, theme badge, image, title, story, quote
-- [ ] Agent status panel: last run, next run, trigger source, critique score
-- [ ] Archive strip reading `index.json`
-- [ ] **No generate button. Anywhere.** That absence is a feature.
+### 2.3 Frontend (3 hrs) ✅ done early
+- [x] Vite + React + TS + Tailwind, written by hand (see `D-016`)
+- [x] `types.ts` mirroring the capsule contract
+- [x] Rounded floating header with nav, live status pill, GitHub CTA
+- [x] Landing hero: autonomy statement + next-run countdown
+- [x] Capsule hero: date, theme/mood/form badges, image, title, story, quote
+- [x] Agent status panel: last run, next run, trigger source, critique score, reasoning
+- [x] "How it works" — the seven-step loop
+- [x] Archive strip reading `index.json`
+- [x] Loading skeleton + waiting state
+- [x] **No generate button. Anywhere.** That absence is a feature.
+- [x] `npm run build` passes clean
 
 ### 2.4 Ship the site (1 hr)
 - [ ] CloudFront + OAC for both buckets in the template
@@ -117,11 +122,12 @@ Multiple days of history is the strongest possible proof. If you only have one, 
 
 Checklist and outline: [`SUBMISSION.md`](SUBMISSION.md)
 
-### 3.4 UI polish — only if time remains (1 hr)
-- [ ] Fade-in on the daily reveal
-- [ ] Open Graph tags so shared links show the image
-- [ ] Loading skeleton
-- [ ] Favicon
+### 3.4 UI polish — mostly landed with 2.3
+- [x] Fade-in on the daily reveal
+- [x] Open Graph tags (image URL still needs filling once a capsule exists)
+- [x] Loading skeleton
+- [x] Favicon
+- [ ] `reduced-motion` verified on a real device
 
 ### 3.5 Final pass (30 min)
 - [ ] Live URL loads in a private window

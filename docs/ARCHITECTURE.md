@@ -120,6 +120,7 @@ This shape is the interface between the agent and the frontend. Change it in `ag
   "theme": "Monsoon Dreams",
   "mood": "wistful",
   "form": "short_story",
+  "reasoning": "Third wet day running and the last two capsules were both solemn; a smaller, human-scale angle keeps the week from flattening.",
   "title": "The City That Waited for Rain",
   "story": "Once the rain arrived, the city remembered...",
   "quote": "Some cities do not wait for rain. They rehearse for it.",
@@ -138,6 +139,8 @@ This shape is the interface between the agent and the frontend. Change it in `ag
   }
 }
 ```
+
+`reasoning` comes straight from the `decide` step and is rendered in the UI. It's the cheapest way to show that a decision actually happened rather than a template being filled — an evaluator can read the agent's justification for today's theme in its own words.
 
 `meta.trigger` is worth calling out. It records **how** the run started — `eventbridge.schedule` for real autonomous runs, `manual.cli` for your own testing. The frontend can then honestly badge each capsule, and you have machine-readable proof of autonomy rather than just a claim.
 
